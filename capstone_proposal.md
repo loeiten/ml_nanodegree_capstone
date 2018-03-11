@@ -1,33 +1,16 @@
 # Machine Learning Engineer Nanodegree
 ## Capstone Proposal: Build a Stock Price Indicator  
 March 10th, 2018
+
 Michael Løiten
 
 ## Proposal
-_(approx. 2-3 pages)_
 
 ### Domain Background
-_(approx. 1-2 paragraphs)_
-
-* (Checked) brief details on the background information of the domain from 
-which the 
-project is proposed
-* (Checked) Historical information
-* (Checked) How or why a problem in the domain can or should be solved
-* (Checked) Related academic research should be appropriately cited in this 
-section
-* (checked?) a discussion of your personal motivation for investigating a 
-particular problem in the domain is encouraged but not required.
-
-Investment firms, hedge funds and even individuals have been using financial
-models to better understand market behavior and make profitable investments and
-trades. A wealth of information is available in the form of historical stock
-prices and company performance data, suitable for machine learning algorithms 
-to process.
 
 Stock market trading has existed since [1602](https://en.wikipedia.org/wiki/Euronext_Amsterdam).
-From its very start the trading of stocks has not only been a place for 
-passive trading between buyer and seller, but it has also influenced national 
+From its very start the stocks markets has not only been a place for 
+passive trading between buyer and seller, but it has also influenced local 
 and global economies.
 
 Although stock trading traditionally has been made manually by man, increased
@@ -43,8 +26,8 @@ used for making systematic trading decisions.
 However, in today's marked, more information of the system is usually needed in 
 order to reach good investment strategies.
 
-One way to add new information is to use regression, through machine learning,
-to try to predict the future value of a stock.
+One way to add new information is to use regression methods through machine 
+learning, to try to predict the future value of a stock.
 In addition, techniques such as those found in 
 [reinforced](https://en.wikipedia.org/wiki/Reinforcement_learning) 
 [learning](https://github.com/aikorea/awesome-rl) can help 
@@ -62,19 +45,20 @@ Apart from finance being interesting to studying in its own, in the domain of
 machine learning it presents an interesting problem due to the nature of 
 data, being sequential.
 This means that traditional training techniques such as randomization of the 
-training data and cross validation makes no sense.
+training data and cross validation techniques makes no sense.
 The training must also be considered perishable as the stock market is rapidly
 changing. 
 
- In addition, financial data is know for beeing 
+ In addition, financial data is known for being 
 [non-stationary](https://en.wikipedia.org/wiki/Stationary_process)
 [stochastic](https://en.wikipedia.org/wiki/Stochastic)
-(the stochastical nature is in some cases be modelled as a [Brownian motion 
+(the stochastic nature is in some cases be modelled as a [Brownian motion 
 Markovian process](http://www.ulb.ac.be/di/map/gbonte/ftp/time_ser.pdf)).
 There are several
 [tests](https://quant.stackexchange.com/questions/2372/how-to-check-if-a-timeseries-is-stationary/2373)
-which can show that the stocks are non-stationarity, which has a consequence 
-that the statistical moments are dependent on time, and that
+which can show that the stock prices are non-stationary.
+As the time series are non-stationary, the statistical moments are dependent on
+time, and 
 [clever](https://quant.stackexchange.com/questions/9192/how-to-normalize-stock-data) 
 [ways](https://quant.stackexchange.com/questions/14205/why-are-we-obsessed-over-normalizing-financial-data?noredirect=1&lq=1)
 of 
@@ -82,27 +66,19 @@ of
 the data is needed.
 
 The techniques used to deal with stock data is also transferable to other 
-sequential data such as weather forecasting, distribution on the 
-electrical grid, maintenance prediction other fields where sensoric 
-data is of importance.
+sequential data such as weather forecasting, power distribution on the 
+electrical grid, maintenance prediction, and other fields where sensory data is
+of importance.
 
 ### Problem Statement
-_(approx. 1 paragraph)_
-
-* (Checked) clearly describe the problem that is to be solved
-* (Checked) The problem described should be well defined 
-* (Checked) should have at least one relevant potential solution
-* (Checked) describe the problem thoroughly such that it is clear that the problem is
- quantifiable
-* (Checked) can be measurable
-* (Checked) replicable
 
 In this project, we will build a stock price predictor for the 50
 stocks with the highest weights in the Standard and Poor's 500 (S&P500) 
 portfolio as of 2018-03-06.
 The predictor will be trained on historical daily data including the
-opening price (Open), highest price the stock traded at (High),
-how many stocks were traded (Volume) and closing price adjusted for 
+opening price (Open), the highest price the stock was traded at (High), the 
+lowest price the stock was traded at (Low), how many stocks were traded (Volume)
+and the closing price adjusted for 
 [stock split](https://classroom.udacity.com/courses/ud501/lessons/4442578629/concepts/45792868240923)
 and
 [dividends](https://classroom.udacity.com/courses/ud501/lessons/4442578629/concepts/44273516340923)
@@ -116,29 +92,18 @@ prediction should be within 5% of actual value, on average.
 
 Although interesting, trading decisions based on machine learning will be 
 outside of scope in this project.
-Also automatic updating of the stock data will be outside the scope of this 
+Also, automatic updating of the stock data will be outside the scope of this 
 project. 
 
 
 ### Datasets and Inputs
-_(approx. 2-3 paragraphs)_
-
-* (Checked) the dataset(s) and/or input(s) thoroughly described
-* (Implicitly checked) such as how they relate to the problem and why they 
-should be used. 
-* (Checked) Information such as how the dataset or input is (was) obtained
-* (Checked) characteristics of the dataset or input
-* (Checked) relevant references and citations
-* (Checked) It should be clear how the dataset(s) or input(s) will be used in
- the project
-* (Checked) whether their use is appropriate given the context of the problem.
 
 For the scope of this project, we will use daily stock data containing open, 
 high, low, close, volume (ohlcv) together with the adjusted close for the 50
 stocks with the highest weights in the S&P500 portfolio together with ^GSPC 
 itself.
 
-The weights for S&P500 will has been collected from 
+The weights for S&P500 has been collected from 
 [SlickCharts](https://www.slickcharts.com/sp500) the 6th of March 2018.
  
 The daily stock data have traditionally been readily available through free 
@@ -160,37 +125,29 @@ As good free alternatives,
 [Quandl](https://www.quandl.com/)
 remains.
 
-All stock data is downloaded through Quandl, with exception of the Standard and 
-Poor 500 index, which is manually downloaded from Yahoo! Finance.
+All stock data is downloaded through Quandl, with the exception of the Standard 
+and Poor 500 index, which is manually downloaded from Yahoo! Finance.
 (Although Yahoo! Finance has 
 [discontinued](https://stackoverflow.com/a/44092983/2786884) 
 their free API, workarounds like 
-[`fix_yahoo_finance`](https://github.com/ranaroussi/fix-yahoo-finance) which 
-uses a smart way to retrieve the needed
+[`fix_yahoo_finance`](https://github.com/ranaroussi/fix-yahoo-finance) 
+exists, which uses a smart way to retrieve the needed
 [breadcrumbs](https://stackoverflow.com/questions/44030983/yahoo-finance-url-not-working).
 Although the download could be through a
 [script](http://quantlabs.net/blog/2017/08/fix-now-for-yahoo-finance-with-python-historical-datareader/),
 the solution can render obsolete in the near future.)
 
-The scope is set to look at a fixed dataset. However, an possible extension 
-would be to update and train the dataset daily.
-The most stable way to retrieve the data would probably be to buy the data from a professional vendor, 
-through for example Quandl. 
+The scope is set to look at a fixed dataset. A possible extension would be to
+update and train the dataset daily.
+The most stable way to retrieve the data would probably be to buy the data from
+a professional vendor, for example through Quandl. 
 
 ### Solution Statement
-_(approx. 1 paragraph)_
-
-* (Checked) clearly describe a solution to the problem
-* (Checked) The solution should be applicable to the project domain and appropriate for
- the dataset(s) or input(s) given
-* (Checked) Additionally, describe the solution thoroughly such that it is clear that 
-the solution is measurable
-* (Checked) replicable 
 
 A training model will be build.
-This inputs a data range from a start date, up until a end date 
-(not earlier than 28 days prior to the prediction), together with a list of 
-ticker symbols within the 50 symbols of the S&P500 set.
+The input for this model is a start date, an end date (not earlier than 28 
+days prior to the prediction) and together with a list of ticker symbols from 
+the 50 symbols of the S&P500 set.
 The output will be the model used for prediction.
 
 A data cleaning module based on the 
@@ -199,25 +156,16 @@ of Udacity's course Machine learning for Trading will be made.
 The data will pass through this module before the final prediction.
 
 The predictor module will be based on the model, taking one or more of the
-available ticker symbols from S&P500 (like GOOG, AAPL) as an input, yielding
+available ticker symbols from S&P500 (like GOOG, AAPL) as an input and yield
 the predicted adjusted close prognosis.
 
-The modules will be made callable through a driver script.
+In the end, these modules will be made callable through a driver script.
 
 ### Benchmark Model
-_(approximately 1-2 paragraphs)_
-
-* (Checked) provide the details for a benchmark model or result that relates to 
-the domain, problem statement, and intended solution
-* (Checked) Ideally, the benchmark model or result contextualizes existing 
-methods or known information in the domain and problem given, which could 
-then be objectively compared to the solution.
-* (Checked) Describe how the benchmark model or result is measurable (can be 
-measured by some metric and clearly observed) with thorough detail.
 
 Although other models are freely available online (see for example the blogs 
-in the [Additional resources](additional-resources) section), the model will 
-be benchmarked against simple models of the adjusted close like 
+in the [Additional resources](#additional-resources) section), the model will 
+be benchmarked against simple models of the adjusted close price, like 
 
 * Prediction equal the latest day
 * [Ordinary least square](http://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares) 
@@ -230,38 +178,14 @@ deviation being based on the historical standard deviation.
 
 
 ### Evaluation Metrics
-_(approx. 1-2 paragraphs)_
 
-* (Checked) at least one evaluation metric that can be used to quantify the 
-performance of both the benchmark model and the solution model.
-* (Checked)  The evaluation metric(s) you propose should be appropriate given
- the context of the data, the problem statement, and the intended solution. 
-* (Checked)  Describe how the evaluation metric(s) are derived and provide an
- example of their mathematical representations (if applicable). 
-* (Checked)  Complex evaluation metrics should be clearly defined and 
-quantifiable (can be expressed in mathematical or logical terms).
-
-The relative error of the adjusted close will denote the success 
-factor of the model.
+The relative error of the adjusted close will denote the success of the model.
 The relative error is defined as
 
 `|True value - Approximated vale|/True value`
 
 
 ### Project Design
-_(approx. 1 page)_
-
-* summarize a theoretical workflow for approaching a solution given the 
-problem. 
-* Provide thorough discussion for what strategies you may consider employing, 
-* what analysis of the data might be required before being used, or which 
-algorithms will be considered for your implementation
-* The workflow and discussion that you provide should align with the 
-qualities of the previous sections
-* Additionally, you are encouraged to include small visualizations, 
-pseudocode, or diagrams to aid in describing the project design
-* The discussion should clearly outline your intended workflow of the 
-capstone project.
 
 In order to successfully build a model, one need to get a feeling of the data
 set.
@@ -270,7 +194,7 @@ Are there a lot of missing data?
 Can all the missing data be mended, or should some ticker symbols be left out?
 A visualization of the different data attributes will be done to get a 
 feeling of general trends and patterns.
-Feature engineering will also bee needed as we are working with categorical 
+Feature engineering will also be needed as we are working with categorical 
 data.
 The features will be created by shifting the data as explained 
 [here](https://machinelearningmastery.com/convert-time-series-supervised-learning-problem-python/).
@@ -279,16 +203,16 @@ Following, the simple benchmark tests will be performed in order to see if
 fancy models obtained through machine learning is needed at all.
 If it turns out that some simple methods performs really well, it could be 
 interesting to see if machine learning has something to add to the problem at
-at all.
+all.
 
 The next step in the project would be to experiment with different techniques.
 This can potentially take a lot of effort as there are many techniques to 
 explore.
-However the following techniques can be interesting to have a look at
+However, the following techniques can be interesting to have a look at
 * KNN, as this is a simple model, and has proved successful at for example 
 [QuantDesk](https://classroom.udacity.com/courses/ud501/lessons/4684695874/concepts/46403887880923)
 * [Generalized Linear Models](http://scikit-learn.org/stable/modules/linear_model.html) 
-like Bayesian Regression
+like Bayesian Regression.
 * Neural nets, in particular convolutional neural networks as these have a 
 tendency to perform well when the "relative positions" of the features is 
 important.
@@ -303,8 +227,7 @@ for variance and bias.
 * The amount of features, i.e. how far back would we need to look in order to 
 obtain reasonable results. 
 
-Finally the full pipeline of training, cleaning and predicting will be made.
-
+Finally, the full pipeline of training, cleaning and predicting will be made.
 
 
 ### Additional resources
@@ -325,18 +248,3 @@ blog (note that this blog does a
 [explaining](https://medium.com/machine-learning-world/neural-networks-for-algorithmic-trading-2-1-multivariate-time-series-ab016ce70f57), 
 although the results 
 are somewhat poor).
-
------------
-
-**Before submitting your proposal, ask yourself. . .**
-
-- Does the proposal you have written follow a well-organized structure similar
-to that of the project template?
-- Is each section (particularly **Solution Statement** and **Project Design**)
-written in a clear, concise and specific fashion? Are there any ambiguous
- terms or phrases that need clarification?
-- Would the intended audience of your project be able to understand your
- proposal?
-- Have you properly proofread your proposal to assure there are minimal 
-grammatical and spelling mistakes?
-- Are all the resources used for this project correctly cited and referenced?
