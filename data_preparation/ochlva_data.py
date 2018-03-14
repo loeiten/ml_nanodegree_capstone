@@ -26,13 +26,23 @@ class OCHLVAData(object):
         self.clean_data = dict()
 
         # Load ^GSPC
-        gspc_path = self.data_dir.joinpath(f'^GSPC.csv')
-        self.raw_data['^GSPC'] = pd.read_csv(str(gspc_path), index_col='Date')
+        symbol = '^GSPC'
+        gspc_path = self.data_dir.joinpath(f'{symbol}.csv')
+        self.raw_data[symbol] =\
+            pd.read_csv(str(gspc_path), index_col='Date')
+
+        # Rename to get column names consistent
+        self.raw_data[symbol] = self.raw_data[symbol].rename(
+            index=str, columns={'Adj Close': 'Adj. Close'})
+
+        # Cast to dates
+        self.raw_data[symbol].index = \
+            pd.to_datetime(self.raw_data[symbol].index)
 
         # Get dates
-        self.dates = self.raw_data['^GSPC'].index
+        self.dates = self.raw_data[symbol].index
 
-        self.data_cleaning('^GSPC')
+        self.data_cleaning(symbol)
 
     def load_data(self, symbol):
         """
@@ -55,7 +65,9 @@ class OCHLVAData(object):
 
         if symbol not in self.raw_data.keys():
             path = self.data_dir.joinpath(f'{symbol}.csv')
-            self.raw_data[symbol] = pd.read_csv(str(path), index_col='Date')
+            self.raw_data[symbol] = pd.read_csv(str(path),
+                                                parse_dates=True,
+                                                index_col='Date')
 
         self.data_cleaning(symbol)
 
@@ -80,3 +92,40 @@ class OCHLVAData(object):
         self.clean_data[symbol] = self.raw_data[symbol].loc[intersect].copy()
         self.clean_data[symbol].fillna(method='ffill', inplace=True)
         self.clean_data[symbol].fillna(method='bfill', inplace=True)
+
+    def plot(self, features):
+        """
+        Plots the clean data of the selected features.
+
+        Parameters
+        ----------
+        features : list
+            List of the features to be plotted
+
+        Returns
+        -------
+        ax : matplotlib.AxesSubplot
+            The axes of the plot
+        """
+
+        symbol = '^GSPC'
+        plot_frame = self.clean_data[symbol].loc[:, features]
+        col_names = {f: f'{symbol} {f}' for f in features}
+        plot_frame.rename(index=str, columns=col_names, inplace=True)
+
+        symbols = [k for k in self.clean_data.keys() if k != '^GSPC']
+        for symbol in symbols:
+            plot_frame = \
+                pd.merge(plot_frame,
+                         self.clean_data[symbol].loc[:, features],
+                         left_index=True, right_index=True)
+            col_names = {f: f'{symbol} {f}' for f in features}
+            plot_frame.rename(index=str, columns=col_names, inplace=True)
+
+        # Cast to dates
+        plot_frame.index = pd.to_datetime(plot_frame.index)
+
+        ax = plot_frame.plot(x_compat=True)
+        ax.set_ylabel('USD')
+
+        return ax
