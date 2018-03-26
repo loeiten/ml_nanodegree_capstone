@@ -14,12 +14,12 @@ class TestLatestDay(unittest.TestCase):
         self.x = np.array([row,
                            row+end-1,
                            row+2*end-1])
-        self.y = np.array([row+3*end-1])
+        self.y = np.array(row+3*end-1)
 
     def test_fit(self):
         reg = latest_day.LatestDay()
         reg.fit(self.x, self.y)
-        self.assertTrue(np.allclose(self.y, reg.prediction_values))
+        self.assertTrue(np.allclose(self.y[-1], reg.prediction_values))
 
     def test_predict(self):
         reg = latest_day.LatestDay()
