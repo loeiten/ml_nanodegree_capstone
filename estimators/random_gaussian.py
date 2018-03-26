@@ -10,16 +10,16 @@ class RandomGaussian(RegressorMixin):
     """
     Class for random Gaussian prediction.
 
+    Note
+    ----
+    This estimator only uses the target values for fitting and prediction.
+
     Attributes
     ----------
     mean : array-like, shape (n_features,)
         The mean of the fitted data.
     std : array-like, shape (n_features,)
         The standard deviation of the fitted data.
-
-    Notes
-    -----
-    This estimator only uses the target values for fitting and prediction.
 
     Examples
     --------

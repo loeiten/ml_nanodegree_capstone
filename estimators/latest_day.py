@@ -10,14 +10,14 @@ class LatestDay(RegressorMixin):
     """
     Class for latest day prediction.
 
+    Note
+    ----
+    This estimator only uses the target values for fitting and prediction.
+
     Attributes
     ----------
     prediction_values : array, shape (days, n_features)
         The values used for prediction.
-
-    Notes
-    -----
-    This estimator only uses the target values for fitting and prediction.
 
     Examples
     --------
