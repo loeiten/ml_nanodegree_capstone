@@ -3,9 +3,10 @@
 
 
 import numpy as np
+from sklearn.base import RegressorMixin
 
 
-class LatestDay(object):
+class LatestDay(RegressorMixin):
     """
     Class for latest day prediction.
 
@@ -18,51 +19,43 @@ class LatestDay(object):
 
     Notes
     -----
-    This estimator do not use target values.
+    This estimator only uses the target values when fitting.
 
     Examples
     --------
     >>> import numpy as np
     >>> from estimators import latest_day
-    >>> reg = latest_day.LatestDay(days=2)
+    >>> reg = latest_day.LatestDay()
     >>> x = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> y = np.array([7, 8])
     >>> reg.fit(x)
-    >>> reg.predict(np.array([[7, 8, 9], [10, 11, 12], [13, 14, 15]]))
-    array([[4, 5, 6],
-           [4, 5, 6]])
+    >>> reg.predict(np.array([[9, 10, 11], [12, 13, 14], [15, 16, 17]]))
+    array([8, 8, 8])
     """
 
-    def __init__(self, days=7):
+    def __init__(self):
         """
-        Initialized the estimator with number of days to predict.
-
-        Also declares member data.
-
-        Parameters
-        ----------
-        days : int
-            Number of days to do the prediction on.
+        Declares member data.
         """
-
-        self.days = days
 
         # Declare member data
         self.prediction_values = None
         self._n_features = None
 
-    def fit(self, x):
+    def fit(self, x, y):
         """
         Fits the model.
 
         Parameters
         ----------
         x : array-like, shape (n_samples, n_features)
-            Set of samples, where n_samples is the number of samples and
-            n_features is the number of features.
+            The training data.
+        y : array-like, shape (n_samples, n_targets)
+            The target values.
         """
 
         self._n_features = x.shape[1]
-        self.prediction_values = x[-1, :].copy()
+        self.prediction_values = y[-1, :].copy()
 
     def predict(self, x):
         """
@@ -71,7 +64,7 @@ class LatestDay(object):
         Parameters
         ----------
         x : array-like, shape (_, n_features)
-            Set to perform classification on.
+            Set to perform regression on.
 
         Returns
         -------
@@ -83,8 +76,6 @@ class LatestDay(object):
         if x.shape[1] != self._n_features:
             raise ValueError("Dimension mismatch between fit and predict.")
 
-        y_pred = np.repeat(self.prediction_values.copy()[np.newaxis, :],
-                           self.days,
-                           axis=0)
+        y_pred = self.prediction_values.copy()[np.newaxis, :]
 
         return y_pred

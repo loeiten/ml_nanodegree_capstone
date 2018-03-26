@@ -9,29 +9,26 @@ from estimators import latest_day
 
 class TestLatestDay(unittest.TestCase):
     def setUp(self):
-        row = np.array(range(1, 6))
-        self.last_row = row*100
+        end = 4
+        row = np.array(range(1, end))
         self.x = np.array([row,
-                           row*10,
-                           self.last_row])
-
-    def test___init__(self):
-        reg = latest_day.LatestDay(42)
-        expected = 42
-        self.assertEqual(expected, reg.days)
+                           row+end-1,
+                           row+2*end-1])
+        self.y = np.array([row+3*end-1])
 
     def test_fit(self):
         reg = latest_day.LatestDay()
-        reg.fit(self.x)
-        self.assertTrue(np.allclose(self.last_row, reg.prediction_values))
+        reg.fit(self.x, self.y)
+        self.assertTrue(np.allclose(self.y, reg.prediction_values))
 
     def test_predict(self):
         reg = latest_day.LatestDay()
-        reg.fit(self.x)
+        reg.fit(self.x, self.y)
         self.assertRaises(ValueError, reg.predict, self.x[:, :-1])
 
-        expected = np.array(list(self.last_row)*reg.days).\
-            reshape((reg.days, len(self.last_row)))
+        expected = np.repeat(reg.prediction_values.copy()[np.newaxis, :],
+                             len(self.y),
+                             axis=0)
 
         self.assertTrue(np.allclose(expected, reg.predict(self.x)))
 
