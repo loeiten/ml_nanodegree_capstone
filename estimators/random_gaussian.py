@@ -3,38 +3,37 @@
 
 
 import numpy as np
+from sklearn.base import RegressorMixin
 
 
-class RandomGaussian(object):
+class RandomGaussian(RegressorMixin):
     """
     Class for random Gaussian prediction.
 
     Attributes
     ----------
-    days : int
-        Number of days to do the prediction on.
     mean : array-like, shape (n_features,)
         The mean of the fitted data.
-    mean : array-like, shape (n_features,)
+    std : array-like, shape (n_features,)
         The standard deviation of the fitted data.
 
     Notes
     -----
-    This estimator do not use target values.
+    This estimator only uses the target values for fitting and prediction.
 
     Examples
     --------
     >>> import numpy as np
     >>> from estimators import random_gaussian
-    >>> reg = random_gaussian.RandomGaussian(days=2, seed=42)
+    >>> reg = random_gaussian.RandomGaussian(seed=42)
     >>> x = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> reg.fit(x)
-    >>> reg.predict(np.array([[7, 8, 9], [10, 11, 12], [13, 14, 15]]))
-    array([[3.24507123, 3.29260355, 5.47153281],
-           [4.78454478, 3.14876994, 4.14879456]])
+    >>> y = np.array([7, 8])
+    >>> reg.fit(x, y)
+    >>> reg.predict(np.array([[9, 10, 11], [12, 13, 14], [15, 16, 17]]))
+    array()
     """
 
-    def __init__(self, days=7, seed=None):
+    def __init__(self, seed=None):
         """
         Initialized the estimator with number of days to predict.
 
@@ -42,8 +41,6 @@ class RandomGaussian(object):
 
         Parameters
         ----------
-        days : int
-            Number of days to do the prediction on.
         seed : None or int
             Seed for the random number generator
         """
@@ -51,27 +48,33 @@ class RandomGaussian(object):
         # Set the seed
         np.random.seed(seed)
 
-        self.days = days
-
         # Declare member data
         self.mean = None
         self.std = None
         self._n_features = None
 
-    def fit(self, x):
+    def fit(self, x, y):
         """
         Fits the model.
 
         Parameters
         ----------
         x : array-like, shape (n_samples, n_features)
-            Set of samples, where n_samples is the number of samples and
-            n_features is the number of features.
+            The training data.
+        y : array-like, shape (n_samples, n_targets)
+            The target values.
         """
 
         self._n_features = x.shape[1]
-        self.mean = np.mean(x, axis=0)
-        self.std = np.std(x, axis=0)
+
+        y = y.copy()
+
+        # Recast if rank 1 tensor is given
+        if len(y.shape) == 1:
+            y = y.reshape(len(y), 1)
+
+        self.mean = np.mean(y, axis=0)
+        self.std = np.std(y, axis=0)
 
     def predict(self, x):
         """
@@ -84,7 +87,7 @@ class RandomGaussian(object):
 
         Returns
         -------
-        y_pred : array, shape (days, n_features)
+        y_pred : array, shape (_, n_features)
             Prediction values.
         """
 
@@ -94,6 +97,6 @@ class RandomGaussian(object):
 
         y_pred = np.random.normal(self.mean,
                                   self.std,
-                                  (self.days, len(self.mean)))
+                                  (x.shape[0], len(self.mean)))
 
         return y_pred
