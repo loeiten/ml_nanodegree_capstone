@@ -49,7 +49,7 @@ def feature_generator(df, shift_column, days, copy=True):
     """
     Generates features
 
-    Attempts to insert the columns immediately after the position of
+    Attempts to insert the columns immediately before the position of
     shift_column
 
     Parameters
@@ -75,11 +75,11 @@ def feature_generator(df, shift_column, days, copy=True):
     >>> df = pd.DataFrame(np.array([[1,2,3], [4,5,6], [7,8,9], [10, 11, 12]]),
     ...                   columns=['a', 'b', 'c'])
     >>> feature_generator(df, 'b', 3)
-        a   b   c  c + 1 days  c + 2 days
-    0   1   2   3         6.0         9.0
-    1   4   5   6         9.0        12.0
-    2   7   8   9        12.0         NaN
-    3  10  11  12         NaN         NaN
+          a  b - 3 days  b - 2 days  b - 1 days     b     c
+    0   1.0         NaN         NaN         NaN   2.0   3.0
+    1   4.0         NaN         NaN         2.0   5.0   6.0
+    2   7.0         NaN         2.0         5.0   8.0   9.0
+    3  10.0         2.0         5.0         8.0  11.0  12.0
     """
     if copy:
         df = df.copy()
@@ -87,9 +87,9 @@ def feature_generator(df, shift_column, days, copy=True):
     for day in range(1, days+1):
         # Get last column
         cols = df.columns
-        last_ind = [el for el in cols if str(shift_column) in str(el)][-1]
+        last_ind = [el for el in cols if str(shift_column) in str(el)][0]
         ind = list(cols).index(last_ind)
         col = df.loc[:, shift_column].shift(day)
-        df.insert(ind+1, f'{shift_column} - {day} days', col)
+        df.insert(ind, f'{shift_column} - {day} days', col)
 
     return df
