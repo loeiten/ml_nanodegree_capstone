@@ -8,6 +8,15 @@ from pathlib import Path
 class OCHLVAData(object):
     """
     Class treating Open, Close, High, Low, Volume and Adjusted close
+
+    Examples
+    --------
+    The following example will load AAPL and plot its Close and Adj. Close
+    together with S&P 500
+
+    >>> data = OCHLVAData()  # Loads S&P500 as ^GSCP for reference dates
+    >>> data.load_data('AAPL')
+    >>> data.plot(['Close', 'Adj. Close']
     """
 
     def __init__(self):
@@ -125,7 +134,8 @@ class OCHLVAData(object):
         # Cast to dates
         plot_frame.index = pd.to_datetime(plot_frame.index)
 
-        ax = plot_frame.plot(x_compat=True)
-        ax.set_ylabel('USD')
+        ax = plot_frame.plot()
+        _ = ax.set_ylabel('USD')
+        ax.grid()
 
         return ax
