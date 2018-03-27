@@ -59,7 +59,7 @@ def feature_generator(df, shift_column, days, copy=True):
     shift_column : str
         The column to generate the targets from
     days : int
-        List of days to shift
+        Number of days to create features from
     copy : bool
         If a copy is returned
 
@@ -91,5 +91,46 @@ def feature_generator(df, shift_column, days, copy=True):
         ind = list(cols).index(last_ind)
         col = df.loc[:, shift_column].shift(day)
         df.insert(ind, f'{shift_column} - {day} days', col)
+
+    return df
+
+
+def keep_columns(df, columns, copy=True):
+    """
+    Removes all columns except those specified in columns
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data frame to make the targets on
+    columns : list
+        List of columns to keep
+    copy : bool
+        If a copy is returned
+
+    Returns
+    -------
+    df : DataFrame
+        The data frame with the targets
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame(np.array([[1,2,3], [4,5,6], [7,8,9], [10, 11, 12]]),
+    ...                   columns=['a', 'b', 'c'])
+    >>> keep_columns(df, ['a', 'c'])
+          a     c
+    0   1.0   3.0
+    1   4.0   6.0
+    2   7.0   9.0
+    3  10.0  12.0
+    """
+    if copy:
+        df = df.copy()
+
+    remove = [col for col in df.columns if col not in columns]
+
+    df.drop(remove, axis=1, inplace=True)
 
     return df

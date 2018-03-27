@@ -138,9 +138,9 @@ class OCHLVAData(object):
 
         # Append possible missing keys
         if len(self.transformed_data.keys()) != len(self.clean_data.keys()):
-            msg = ("New symbols added after first transformation. "
-                   "Reset with self.reset_transform and call the "
-                   "transformations again.")
+            msg = ('New symbols added after first transformation. '
+                   'Reset with self.reset_transform and call the '
+                   'transformations again.')
             raise RuntimeError(msg)
 
         for key in self.transformed_data.keys():

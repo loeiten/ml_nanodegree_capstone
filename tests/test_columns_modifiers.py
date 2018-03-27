@@ -4,8 +4,9 @@
 import unittest
 import pandas as pd
 import numpy as np
-from utils.column_generators import feature_generator
-from utils.column_generators import target_generator
+from utils.column_modifiers import feature_generator
+from utils.column_modifiers import target_generator
+from utils.column_modifiers import keep_columns
 
 
 class TestColumnsGenerator(unittest.TestCase):
@@ -37,6 +38,19 @@ class TestColumnsGenerator(unittest.TestCase):
             columns=['a', 'b - 3 days', 'b - 2 days', 'b - 1 days', 'b', 'c'])
 
         result = feature_generator(self.df, 'b', 3)
+
+        self.assertTrue(expected.equals(result))
+
+    def test_keep_columns(self):
+        expected = pd.DataFrame(
+            np.array([[1, 3],
+                      [4, 6],
+                      [7, 9],
+                      [10, 12]]),
+            columns=['a', 'c'],
+            dtype=float)
+
+        result = keep_columns(self.df, ['a', 'c'])
 
         self.assertTrue(expected.equals(result))
 

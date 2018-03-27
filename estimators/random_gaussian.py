@@ -93,7 +93,7 @@ class RandomGaussian(RegressorMixin):
 
         # Check dimension
         if x.shape[1] != self._n_features:
-            raise ValueError("Dimension mismatch between fit and predict.")
+            raise ValueError('Dimension mismatch between fit and predict.')
 
         y_pred = np.random.normal(self.mean,
                                   self.std,
