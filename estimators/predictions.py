@@ -100,7 +100,6 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
         # The first prediction is making a prediction on the test set,
         # so we add 1 to days to account for this
         for pred_nr in range(x_test.shape[0] - days + 1):
-            print(pred_nr)
             # Extend the training data
             rolling_x = pd.concat([x_train, x_test.iloc[:pred_nr]], axis=0)
             rolling_y = pd.concat([y_train_cur_col,
