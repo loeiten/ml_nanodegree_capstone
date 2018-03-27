@@ -9,7 +9,7 @@ from utils.column_modifiers import target_generator
 from utils.column_modifiers import keep_columns
 
 
-class TestColumnsGenerator(unittest.TestCase):
+class TestColumnsModifiers(unittest.TestCase):
     def setUp(self):
         self.df = pd.DataFrame(np.array([[1, 2, 3],
                                          [4, 5, 6],
