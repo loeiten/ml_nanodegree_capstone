@@ -38,13 +38,14 @@ def normalized_root_mean_square_error(true, pred):
     errors = []
 
     # Loop through all the targets
-    for col in pred.columns:
-        intersect = true.loc[:, col].dropna().index.\
-            intersection(pred.loc[:, col].dropna().index)
+    for col in range(len(pred.columns)):
+        intersect = true.loc[:, true.columns[col]].dropna().index.\
+            intersection(pred.loc[:, pred.columns[col]].dropna().index)
         
         errors.append(
-            mean_squared_error(true.loc[true.index.isin(intersect), col],
-                               pred.loc[pred.index.isin(intersect), col]) /
+            mean_squared_error(
+                true.loc[true.index.isin(intersect), true.columns[col]],
+                pred.loc[pred.index.isin(intersect), pred.columns[col]]) /
             (true.dropna().values.max() - true.dropna().values.min()))
         
     error = np.mean(errors)

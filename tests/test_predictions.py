@@ -38,9 +38,9 @@ class TestPredictions(unittest.TestCase):
         result = \
             calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test)
 
-        self.assertTrue(np.isclose(result.values,
-                                   expected.values,
-                                   equal_nan=True).all())
+        self.assertTrue(np.allclose(result.values,
+                                    expected.values,
+                                    equal_nan=True))
 
 
 if __name__ == '__main__':

@@ -12,14 +12,15 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
 
     Our goal is to make a prediction every time new data becomes available to
     us. We will retrain the model before each prediction.
-    In the case of testing the model on a unseen test set the first
-    prediction will use only the data from the training set, and the
-    prediction will be at the dates belonging to the test set. However,
-    we have a lot of unused data in the test set, so we can do a rolling
-    prediction.
+
+    The first prediction will use only the data from the training set, and the
+    prediction will be for a date (or dates) belonging to the test set. However,
+    this means that we have a lot of unused data in the test set, so we can
+    do a rolling prediction.
+
     I.e. we will update the training set with the earliest observation from the
     test set and make the next prediction. Then we will update the training set
-    with the two earliest predictions in the test set and so on, until we
+    with the two earliest observations in the test set and so on, until we
     have predicted until the latest date in the test set.
 
     Notes
@@ -114,8 +115,8 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
         # Cast the result into a DataFrame for easier post-processing
         # As the first prediction is on the training set, we subtract 1 in the
         # indexing to account for this
-        df_list.append(pd.DataFrame(y_pred, index=y_test.index[days - 1:],
-                       columns=[y_test_cur_col.name]))
+        df_list.append(pd.DataFrame(y_pred, index=x_test.index[days - 1:],
+                       columns=[y_test_cur_col.name + ' predicted']))
 
     pred_df = pd.concat(df_list, axis=1)
 
