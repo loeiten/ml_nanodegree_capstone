@@ -9,6 +9,17 @@ class OCHLVAData(object):
     """
     Class treating Open, Close, High, Low, Volume and Adjusted close
 
+    Attributes
+    ----------
+    raw_data : dict
+        Dictionary of the data frames of the raw stock data.
+    clean_data : dict
+        Dictionary of the data frames of the cleaned stock data.
+    transformed_data : dict
+        Dictionary of the transformed data frames.
+    dates : Index
+        The dates S&P 500 was traded on
+
     Examples
     --------
     The following example will load AAPL and plot its Close and Adj. Close
@@ -33,6 +44,7 @@ class OCHLVAData(object):
         # Variable initialization
         self.raw_data = dict()
         self.clean_data = dict()
+        self.transformed_data = dict()
 
         # Load ^GSPC
         symbol = '^GSPC'
@@ -101,6 +113,46 @@ class OCHLVAData(object):
         self.clean_data[symbol] = self.raw_data[symbol].loc[intersect].copy()
         self.clean_data[symbol].fillna(method='ffill', inplace=True)
         self.clean_data[symbol].fillna(method='bfill', inplace=True)
+
+    def transform(self, func, *args, **kwargs):
+        """
+        Apply a transformation to all data frames of the clean data.
+
+        The transformed_data dict will be populated on the first call.
+
+        Parameters
+        ----------
+        func : function
+            A function acting on a DataFrame. The function must take a
+            DataFrame as input, and work on it inplace.
+        args : tuple
+            Positional arguments for the input function.
+        kwargs : dict
+            Keyword arguments for the input function.
+        """
+
+        # Initialize on first call
+        if not self.transformed_data:
+            for key in self.clean_data.keys():
+                self.transformed_data[key] = self.clean_data[key].copy()
+
+        # Append possible missing keys
+        if len(self.transformed_data.keys()) != len(self.clean_data.keys()):
+            msg = ('New symbols added after first transformation. '
+                   'Reset with self.reset_transform and call the '
+                   'transformations again.')
+            raise RuntimeError(msg)
+
+        for key in self.transformed_data.keys():
+            func(self.transformed_data[key], *args, **kwargs)
+
+    def reset_transform(self):
+        """
+        Resets all transformations by setting the self.transformed_data to an
+        empty dict.
+        """
+
+        self.transformed_data = dict()
 
     def plot(self, features):
         """
