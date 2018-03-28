@@ -21,11 +21,9 @@ class TestPredictions(unittest.TestCase):
              [10., 10.],
              [11., 11.],
              [12., 12.],
-             [13., 13.],
-             [14., 14.],
-             [15., 15.]]),
+             [13., np.nan]]),
             columns=['x + 2 days', 'x + 3 days'],
-            index=range(5, 16))
+            index=range(5, 14))
 
         df = pd.DataFrame(np.array(range(16)), columns=['x'])
         df = target_generator(df, 'x', [2, 3])
