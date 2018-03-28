@@ -26,11 +26,12 @@ class RandomGaussian(RegressorMixin):
     >>> import numpy as np
     >>> from estimators import random_gaussian
     >>> reg = random_gaussian.RandomGaussian(seed=42)
-    >>> x = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> y = np.array([7, 8])
+    >>> x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> y = np.array([6, 7, np.nan])
     >>> reg.fit(x, y)
-    >>> reg.predict(np.array([[9, 10, 11], [12, 13, 14], [15, 16, 17]]))
-    array()
+    >>> reg.predict(np.array([[10, 11, 12], [13, 14, 15]]))
+    array([[6.74835708],
+           [6.43086785]])
     """
 
     def __init__(self, seed=None):
@@ -73,8 +74,8 @@ class RandomGaussian(RegressorMixin):
         if len(y.shape) == 1:
             y = y.reshape(len(y), 1)
 
-        self.mean = np.mean(y, axis=0)
-        self.std = np.std(y, axis=0)
+        self.mean = np.nanmean(y, axis=0)
+        self.std = np.nanstd(y, axis=0)
 
     def predict(self, x):
         """
