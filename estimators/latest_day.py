@@ -24,11 +24,12 @@ class LatestDay(RegressorMixin):
     >>> import numpy as np
     >>> from estimators import latest_day
     >>> reg = latest_day.LatestDay()
-    >>> x = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> y = np.array([7, 8])
+    >>> x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> y = np.array([6, 7, np.nan])
     >>> reg.fit(x, y)
-    >>> reg.predict(np.array([[9, 10, 11], [12, 13, 14], [15, 16, 17]]))
-    array([8, 8, 8])
+    >>> reg.predict(np.array([[10, 11, 12], [13, 14, 15]]))
+    array([[7.],
+           [7.]])
     """
 
     def __init__(self):
@@ -43,6 +44,12 @@ class LatestDay(RegressorMixin):
     def fit(self, x, y):
         """
         Fits the model.
+
+        Notes
+        -----
+        The y_test cannot contain any nans, with exception of possible nans at
+         the end originating from the shift as shown in
+         utils.column_modifiers.target_generator
 
         Parameters
         ----------
@@ -60,7 +67,12 @@ class LatestDay(RegressorMixin):
         if len(y.shape) == 1:
             y = y.reshape(len(y), 1)
 
-        self.prediction_values = y[-1, :]
+        # Initialize the self.prediction_values
+        self.prediction_values = np.empty(y.shape[1])
+
+        for col in range(y.shape[1]):
+            # Find the last value which is not nan
+            self.prediction_values[col] = y[(~np.isnan(y)).sum(axis=0) - 1, col]
 
     def predict(self, x):
         """
@@ -81,6 +93,8 @@ class LatestDay(RegressorMixin):
         if x.shape[1] != self._n_features:
             raise ValueError('Dimension mismatch between fit and predict.')
 
-        y_pred = self.prediction_values.copy()[np.newaxis, :]
+        y_pred = np.repeat(self.prediction_values.copy()[np.newaxis, :],
+                           x.shape[0],
+                           axis=0)
 
         return y_pred

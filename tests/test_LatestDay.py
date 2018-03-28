@@ -9,28 +9,32 @@ from estimators import latest_day
 
 class TestLatestDay(unittest.TestCase):
     def setUp(self):
-        end = 4
-        row = np.array(range(1, end))
-        self.x = np.array([row,
-                           row+end-1,
-                           row+2*end-1])
-        self.y = np.array(row+3*end-1)
+        # Cannot store nan in integer types
+        # https://stackoverflow.com/questions/11548005/numpy-or-pandas-keeping-array-type-as-integer-while-having-a-nan-value
+        self.x = np.array(range(21), dtype=float).reshape(7, 3)
+        self.days = 2
+        # Make target (the prediction) self.days days from today
+        self.y = np.roll(self.x[:, -1], -self.days)
+        # Set elements rolled beyond last position to nan
+        self.y[-self.days:] = np.nan
 
     def test_fit(self):
         reg = latest_day.LatestDay()
         reg.fit(self.x, self.y)
-        self.assertTrue(np.allclose(self.y[-1], reg.prediction_values))
+        expected = self.y[-self.days - 1]
+        self.assertTrue(np.allclose(expected, reg.prediction_values))
 
     def test_predict(self):
         reg = latest_day.LatestDay()
         reg.fit(self.x, self.y)
         self.assertRaises(ValueError, reg.predict, self.x[:, :-1])
 
-        expected = np.repeat(reg.prediction_values.copy()[np.newaxis, :],
-                             len(self.y),
-                             axis=0)
+        expected = \
+            np.array([self.y[-self.days-1]]*len(self.x)).reshape(len(self.x), 1)
 
-        self.assertTrue(np.allclose(expected, reg.predict(self.x)))
+        result = reg.predict(self.x)
+
+        self.assertTrue(np.allclose(expected, result))
 
 
 if __name__ == '__main__':
