@@ -78,9 +78,7 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
     10        10.0        10.0
     11        11.0        11.0
     12        12.0        12.0
-    13        13.0        13.0
-    14        14.0        14.0
-    15        15.0        15.0
+    13        13.0         NaN
     """
 
     # Initialize the DataFrames list
@@ -96,11 +94,15 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
         days = prediction_days[col_ind]
 
         # Initialize y_pred
-        y_pred = np.empty(x_test.shape[0] - days + 1)
+        # The length of the array will be the same as y_test, but -days
+        # shorter due to the prediction is done "days" days in the future,
+        # and additional -days shorter accounting for the "days" NaN values
+        # at the end of y_test (which arises due to the shift)
+        # The +1 comes from the first prediction which uses only the training
+        # set
+        y_pred = np.empty(y_test_cur_col.shape[0] - 2*days + 1)
 
-        # The first prediction is making a prediction on the test set,
-        # so we add 1 to days to account for this
-        for pred_nr in range(x_test.shape[0] - days + 1):
+        for pred_nr in range(len(y_pred)):
             # Extend the training data
             rolling_x = pd.concat([x_train, x_test.iloc[:pred_nr]], axis=0)
             rolling_y = pd.concat([y_train_cur_col,
@@ -113,9 +115,11 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
             y_pred[pred_nr] = reg.predict(rolling_x.values)[-1]
 
         # Cast the result into a DataFrame for easier post-processing
-        # As the first prediction is on the training set, we subtract 1 in the
-        # indexing to account for this
-        df_list.append(pd.DataFrame(y_pred, index=x_test.index[days - 1:],
+        # The indexing from y_test includes the first days where there will
+        # be no prediction for (except the one done from the pure trainng
+        # set), and the nan values at the end of y_test due to the shift
+        df_list.append(pd.DataFrame(y_pred,
+                       index=y_test_cur_col.index[days - 1: -days],
                        columns=[y_test_cur_col.name + ' predicted']))
 
     pred_df = pd.concat(df_list, axis=1)
