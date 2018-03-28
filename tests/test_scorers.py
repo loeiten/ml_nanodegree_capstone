@@ -4,16 +4,16 @@
 import unittest
 import pandas as pd
 import numpy as np
-from scorers.scorers import nrmse
+from scorers.scorers import normalized_root_mean_square_error
 
 
 class TestScorers(unittest.TestCase):
-    def test_nrmse(self):
+    def test_normalized_root_mean_square_error(self):
         expected = 1.0
         true = pd.DataFrame(np.array([[1, 1], [2, 2], [np.nan, np.nan]]))
         pred = pd.DataFrame(np.array([[np.nan, np.nan], [1, 1], [2, 2]]))
 
-        result = nrmse(true, pred)
+        result = normalized_root_mean_square_error(true, pred)
 
         self.assertEqual(expected, result)
 

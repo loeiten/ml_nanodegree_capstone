@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 
 
-def nrmse(true, pred):
+def normalized_root_mean_square_error(true, pred):
     """
     Calculate the normalized root mean squared error.
 
@@ -44,7 +44,8 @@ def nrmse(true, pred):
         
         errors.append(
             mean_squared_error(true.loc[true.index.isin(intersect), col],
-                               pred.loc[pred.index.isin(intersect), col]))
+                               pred.loc[pred.index.isin(intersect), col]) /
+            (true.dropna().values.max() - true.dropna().values.min()))
         
     error = np.mean(errors)
     
