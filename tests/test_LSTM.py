@@ -5,6 +5,7 @@
 import unittest
 import numpy as np
 from estimators.lstm import prepare_input
+from estimators.lstm import make_model
 from estimators import lstm
 
 
@@ -39,6 +40,41 @@ class TestLSTM(unittest.TestCase):
         x, y = prepare_input(self.x, y, self.time_step)
         self.assertTrue(np.allclose(expected_x, x))
         self.assertTrue(np.allclose(expected_y, y, equal_nan=True))
+
+    def test_make_model(self):
+        shape = (2, 3, 4)
+        stateful = True
+        drop_out = 0.0
+        recurrent_drop_out = 0.0
+        loss = 'mse'
+        optimizer = 'adam'
+
+        model = make_model(cells=[10, 20, 30],
+                           shape=shape,
+                           stateful=stateful,
+                           drop_out=drop_out,
+                           recurrent_drop_out=recurrent_drop_out,
+                           loss=loss,
+                           optimizer=optimizer)
+        self.assertEqual(model.count_params(), 9293)
+
+        model = make_model(cells=[10, 20],
+                           shape=shape,
+                           stateful=stateful,
+                           drop_out=drop_out,
+                           recurrent_drop_out=recurrent_drop_out,
+                           loss=loss,
+                           optimizer=optimizer)
+        self.assertEqual(model.count_params(), 3143)
+
+        model = make_model(cells=[10],
+                           shape=shape,
+                           stateful=stateful,
+                           drop_out=drop_out,
+                           recurrent_drop_out=recurrent_drop_out,
+                           loss=loss,
+                           optimizer=optimizer)
+        self.assertEqual(model.count_params(), 633)
 
     def test_fit(self):
         self.fail()
