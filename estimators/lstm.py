@@ -3,6 +3,7 @@
 
 import time
 import numpy as np
+from tensorflow import set_random_seed
 from sklearn.base import RegressorMixin
 from keras.models import Sequential
 from keras.layers import Dense
@@ -39,31 +40,24 @@ class LSTMRegressor(RegressorMixin):
 
     Attributes
     ----------
-    FIXME
-            self.optimizer = optimizer
-        self.epochs = epochs
-        self.time_steps = time_steps
-
-        # Hard coded parameters (not subjected for change in this project)
-        self.loss = 'mean_squared_error'
-
-        self.model
+    model : keras.models.Sequential or None
+        The sequential model (if created).
 
     Examples
     --------
-    FIXME
     >>> import numpy as np
-    >>> from estimators import latest_day
-    >>> reg = latest_day.LatestDay()
+    >>> from estimators import lstm
+    >>> reg = lstm.LSTMRegressor()
     >>> x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> y = np.array([6, 7, np.nan])
     >>> reg.fit(x, y)
     >>> reg.predict(np.array([[10, 11, 12], [13, 14, 15]]))
-    array([[7.],
-           [7.]])
+    array([[2.6165857],
+           [2.9216802]], dtype=float32)
     """
 
     def __init__(self,
+                 seed=None,
                  cells=(128,),
                  drop_out=0.0,
                  recurrent_drop_out=0.0,
@@ -95,22 +89,24 @@ class LSTMRegressor(RegressorMixin):
             Time steps to be used in the RNN.
         """
 
+        # Set the seed
+        np.random.seed(seed)
+        set_random_seed(seed)
+
         # Parameters to be used in make_model
-        self.cells = cells
-        self.drop_out = drop_out
-        self.recurrent_drop_out = recurrent_drop_out
-        self.optimizer = optimizer
+        self._cells = cells
+        self._drop_out = drop_out
+        self._recurrent_drop_out = recurrent_drop_out
+        self._optimizer = optimizer
 
         # Parameters to be used in self.fit
-        self.optimizer = optimizer
-        self.epochs = epochs
-        self.time_steps = time_steps
-        self.batch_size = batch_size
-        self.time_callback = TimeHistory()
+        self._epochs = epochs
+        self._time_steps = time_steps
+        self._batch_size = batch_size
+        self._time_callback = TimeHistory()
 
         # Hard coded parameters (not subjected for change in this project)
-        self.loss = 'mean_squared_error'
-        self.stateful = True
+        self._loss = 'mean_squared_error'
 
         self.model = None
 
@@ -135,36 +131,35 @@ class LSTMRegressor(RegressorMixin):
             y = y.reshape(len(y), 1)
 
         # Reshape to 3d data
-        x, y = prepare_input(x, y, self.time_steps)
+        x, y = prepare_input(x, y, self._time_steps)
 
         # Create the model
         if self.model is None:
-            self.model = make_model(self.cells,
+            self.model = make_model(self._cells,
                                     x.shape,
-                                    self.stateful,
-                                    self.drop_out,
-                                    self.recurrent_drop_out,
-                                    self.loss,
-                                    self.optimizer)
+                                    y.shape[1],
+                                    self._drop_out,
+                                    self._recurrent_drop_out,
+                                    self._loss,
+                                    self._optimizer)
 
         self.model.fit(x, y,
-                       epochs=self.epochs,
-                       batch_size=self.batch_size,
+                       epochs=self._epochs,
+                       batch_size=self._batch_size,
                        verbose=2,
+                       callbacks=[self._time_callback],
                        shuffle=False)
 
     def predict(self, x):
         """
-        FIXME
+        Performs regression with the lstm model on samples in x.
 
-        State that reshaping will happen internally
-
-        Perform classification on samples in x.
+        The input will be reshaped according to self.time_step.
 
         Parameters
         ----------
         x : array-like, shape (_, n_features)
-            Set to perform regression on.
+            The training data.
 
         Returns
         -------
@@ -172,8 +167,14 @@ class LSTMRegressor(RegressorMixin):
             Prediction values.
         """
 
-        # FIXME
-        y_pred = None
+        if self.model is None:
+            raise RuntimeError('No model available. Build model by calling '
+                               'self.fit()')
+
+        x = prepare_input(x, None, self._time_steps)
+
+        y_pred = self.model.predict(x)
+
         return y_pred
 
     def reset_model(self):
@@ -190,13 +191,14 @@ def prepare_input(x, y, time_steps):
 
     Notes
     -----
+    Observation with NaNs will be removed.
     Note that we lose time_step-1 targets with this method.
 
     Parameters
     ----------
     x : array-like, shape (n_samples, n_features)
         The training data.
-    y : array-like, shape (n_samples, n_targets)
+    y : array-like, shape (n_samples, n_targets) or None
         The target values.
     time_steps : int
         Time steps to be used in the RNN.
@@ -207,34 +209,37 @@ def prepare_input(x, y, time_steps):
         The samples prepared for input to the lstm model.
     y : array-like, shape (n_samples - time_step + 1, n_targets)
         The targets prepared for input to the lstm model.
+        Not returned if input y is None
 
     Examples
     --------
     >>> import numpy as np
-    >>> x = np.array([[1, 10], [2, 20], [3, 30], [4, 40], [5, 50], [6, 60]])
-    >>> y = np.array([[2], [3], [4], [5], [6], [np.nan]])
+    >>> nan = np.nan
+    >>> x = np.array([[1, 10], [nan, 20], [3, 30], [4, 40], [5, 50], [6, 60]])
+    >>> y = np.array([[2], [3], [4], [5], [6], [nan]])
     >>> time_steps = 3
     >>> prepare_input(x, y, time_steps)
-    (array([[[ 1, 10],
-             [ 2, 20],
-             [ 3, 30]],
+    (array([[[ 1., 10.],
+             [ 3., 30.],
+             [ 4., 40.]],
 
-            [[ 2, 20],
-             [ 3, 30],
-             [ 4, 40]],
-
-            [[ 3, 30],
-             [ 4, 40],
-             [ 5, 50]],
-
-            [[ 4, 40],
-             [ 5, 50],
-             [ 6, 60]]]),
-     array([[ 4.],
-            [ 5.],
-            [ 6.],
-            [nan]]))
+            [[ 3., 30.],
+             [ 4., 40.],
+             [ 5., 50.]]]), array([[5.],
+            [6.]]))
     """
+
+    # Remove NaNs
+    if y is not None:
+        xy = np.hstack((x, y))
+        # Slice so that observations (rows) with not NaNs are selected
+        xy = xy[~np.isnan(xy).any(axis=1)]
+        x = xy[:, :-1]
+        y = xy[:, -1]
+        # Make a row vector
+        y = y[:, np.newaxis]
+    else:
+        x = x[~np.isnan(x).any(axis=1)]
 
     batch = list()
 
@@ -247,14 +252,17 @@ def prepare_input(x, y, time_steps):
     # The size of the batch will be the first index
     x = np.asarray(batch)
 
-    y = y[-x.shape[0]:, :]
+    if y is not None:
+        y = y[-x.shape[0]:, :]
 
-    return x, y
+        return x, y
+    else:
+        return x
 
 
 def make_model(cells,
-               shape,
-               stateful,
+               input_shape,
+               targets,
                drop_out,
                recurrent_drop_out,
                loss,
@@ -266,11 +274,11 @@ def make_model(cells,
     ----------
     cells : list or tuple
         The number of cells (similar to neurons) for each lstm layer.
-    shape : tuple, shape (samples ,time_steps, n_features)
+    input_shape : tuple, shape (samples ,time_steps, n_features)
         The shape of the input data.
         See prepare_input for details.
-    stateful : bool
-        Whether the lstm should be stateful or not
+    targets : int
+        Number of targets
     drop_out : float
         Output drop out from the output of the layer.
     recurrent_drop_out : float
@@ -291,23 +299,20 @@ def make_model(cells,
     # Create the initial LSTM layer
     if len(cells) > 1:
         model.add(LSTM(cells[0],
-                       batch_input_shape=shape,
-                       stateful=stateful,
+                       input_shape=(None, input_shape[-1]),
                        dropout=drop_out,
                        recurrent_dropout=recurrent_drop_out,
                        return_sequences=True))
     else:
         # Create the only layer
         model.add(LSTM(cells[0],
-                       batch_input_shape=shape,
-                       stateful=stateful,
+                       input_shape=(None, input_shape[-1]),
                        dropout=drop_out,
                        recurrent_dropout=recurrent_drop_out))
 
     # Create intermediate layers
     for cell in cells[1:-1]:
         model.add(LSTM(cell,
-                       stateful=stateful,
                        dropout=drop_out,
                        recurrent_dropout=recurrent_drop_out,
                        return_sequences=True))
@@ -315,12 +320,10 @@ def make_model(cells,
     if len(cells) > 1:
         # Create the last LSTM layer
         model.add(LSTM(cells[-1],
-                       stateful=stateful,
                        dropout=drop_out,
                        recurrent_dropout=recurrent_drop_out))
 
-    # Output: 7 day, 14 day and 28 day prediction
-    model.add(Dense(3))
+    model.add(Dense(targets))
     model.compile(loss=loss, optimizer=optimizer, metrics=[loss])
 
     return model

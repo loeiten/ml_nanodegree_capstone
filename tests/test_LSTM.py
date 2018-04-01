@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 import unittest
 import numpy as np
+from keras.models import Sequential
 from estimators.lstm import prepare_input
 from estimators.lstm import make_model
 from estimators import lstm
@@ -30,12 +30,8 @@ class TestLSTM(unittest.TestCase):
                                [[6., 7., 8.],
                                 [9., 10., 11.]],
                                [[9., 10., 11.],
-                                [12., 13., 14.]],
-                               [[12., 13., 14.],
-                                [15., 16., 17.]],
-                               [[15., 16., 17.],
-                                [18., 19., 20.]]])
-        expected_y = np.array([[11.], [14.], [17.], [20.], [np.nan], [np.nan]])
+                                [12., 13., 14.]]])
+        expected_y = np.array([[11.], [14.], [17.], [20.]])
         y = self.y[:, np.newaxis]
         x, y = prepare_input(self.x, y, self.time_step)
         self.assertTrue(np.allclose(expected_x, x))
@@ -43,15 +39,15 @@ class TestLSTM(unittest.TestCase):
 
     def test_make_model(self):
         shape = (2, 3, 4)
-        stateful = True
+        targets = 3
         drop_out = 0.0
         recurrent_drop_out = 0.0
         loss = 'mse'
         optimizer = 'adam'
 
         model = make_model(cells=[10, 20, 30],
-                           shape=shape,
-                           stateful=stateful,
+                           input_shape=shape,
+                           targets=targets,
                            drop_out=drop_out,
                            recurrent_drop_out=recurrent_drop_out,
                            loss=loss,
@@ -59,8 +55,8 @@ class TestLSTM(unittest.TestCase):
         self.assertEqual(model.count_params(), 9293)
 
         model = make_model(cells=[10, 20],
-                           shape=shape,
-                           stateful=stateful,
+                           input_shape=shape,
+                           targets=targets,
                            drop_out=drop_out,
                            recurrent_drop_out=recurrent_drop_out,
                            loss=loss,
@@ -68,8 +64,8 @@ class TestLSTM(unittest.TestCase):
         self.assertEqual(model.count_params(), 3143)
 
         model = make_model(cells=[10],
-                           shape=shape,
-                           stateful=stateful,
+                           input_shape=shape,
+                           targets=targets,
                            drop_out=drop_out,
                            recurrent_drop_out=recurrent_drop_out,
                            loss=loss,
@@ -77,10 +73,26 @@ class TestLSTM(unittest.TestCase):
         self.assertEqual(model.count_params(), 633)
 
     def test_fit(self):
-        self.fail()
+        reg = lstm.LSTMRegressor(epochs=1)
+        reg.fit(self.x, self.y)
+        self.assertTrue(type(reg), Sequential)
 
     def test_predict(self):
-        self.fail()
+        reg = lstm.LSTMRegressor(seed=42, epochs=1)
+        self.assertRaises(RuntimeError, reg.predict, self.x)
+        reg.fit(self.x, self.y)
+
+        expected = np.array([[0.06867683],
+                             [0.16863918],
+                             [0.20789418],
+                             [0.20693071],
+                             [0.21324374],
+                             [0.2321564],
+                             [0.26384327]])
+
+        result = reg.predict(self.x)
+
+        self.assertTrue(np.allclose(expected, result))
 
 
 if __name__ == '__main__':
