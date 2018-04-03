@@ -48,8 +48,8 @@ class LatestDay(RegressorMixin):
         Notes
         -----
         The y_test cannot contain any nans, with exception of possible nans at
-         the end originating from the shift as shown in
-         utils.column_modifiers.target_generator
+        the end originating from the shift as shown in
+        utils.column_modifiers.target_generator
 
         Parameters
         ----------
@@ -76,7 +76,7 @@ class LatestDay(RegressorMixin):
 
     def predict(self, x):
         """
-        Perform classification on samples in x.
+        Perform regression on samples in x.
 
         Parameters
         ----------

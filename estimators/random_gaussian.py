@@ -79,7 +79,7 @@ class RandomGaussian(RegressorMixin):
 
     def predict(self, x):
         """
-        Perform classification on samples in x.
+        Perform regression on samples in x.
 
         Parameters
         ----------
