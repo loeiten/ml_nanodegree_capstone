@@ -80,12 +80,12 @@ class LatestDay(RegressorMixin):
 
         Parameters
         ----------
-        x : array-like, shape (_, n_features)
+        x : array-like, shape (n_samples, n_features)
             Set to perform regression on.
 
         Returns
         -------
-        y_pred : array, shape (_, n_features)
+        y_pred : array, shape (n_samples, n_features)
             Prediction values.
         """
 
