@@ -4,9 +4,10 @@
 
 import numpy as np
 from sklearn.base import RegressorMixin
+from sklearn.linear_model.base import LinearModel
 
 
-class LatestDay(RegressorMixin):
+class LatestDay(RegressorMixin, LinearModel):
     """
     Class for latest day prediction.
 
@@ -40,6 +41,7 @@ class LatestDay(RegressorMixin):
         # Declare member data
         self.prediction_values = None
         self._n_features = None
+        self._n_targets = None
 
     def fit(self, x, y):
         """
@@ -47,9 +49,9 @@ class LatestDay(RegressorMixin):
 
         Notes
         -----
-        The y_test cannot contain any nans, with exception of possible nans at
-        the end originating from the shift as shown in
-        utils.column_modifiers.target_generator
+        The last value of x is being set as the prediction value
+        Multi feature fitting is not yet supported. Only the last feature
+        will be used in the fitting.
 
         Parameters
         ----------
@@ -66,13 +68,13 @@ class LatestDay(RegressorMixin):
         # Recast if rank 1 tensor is given
         if len(y.shape) == 1:
             y = y.reshape(len(y), 1)
+        self._n_targets = y.shape[1]
 
         # Initialize the self.prediction_values
-        self.prediction_values = np.empty(y.shape[1])
+        self.prediction_values = np.empty(self._n_targets)
 
-        for col in range(y.shape[1]):
-            # Find the last value which is not nan
-            self.prediction_values[col] = y[(~np.isnan(y)).sum(axis=0) - 1, col]
+        for col in range(self._n_targets):
+            self.prediction_values[col] = x[-1, -1]
 
     def predict(self, x):
         """
@@ -93,7 +95,7 @@ class LatestDay(RegressorMixin):
         if x.shape[1] != self._n_features:
             raise ValueError('Dimension mismatch between fit and predict.')
 
-        y_pred = np.repeat(self.prediction_values.copy()[np.newaxis, :],
+        y_pred = np.repeat(self.prediction_values.copy(),
                            x.shape[0],
                            axis=0)
 

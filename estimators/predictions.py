@@ -225,9 +225,10 @@ def calculate_normal_prediction(reg,
 
     # Cast the result into a DataFrame for easier post-processing
     # The indexing from y_test includes the first days where there will
-    # be no prediction for (except the one done from the pure traing
+    # be no prediction for (except the one done from the pure training
     # set), and the nan values at the end of y_test due to the shift
     columns = [col + ' predicted' for col in y_test.columns]
+
     pred_df = pd.DataFrame(y_pred,
                            index=y_test.index,
                            columns=columns)
