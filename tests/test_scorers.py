@@ -4,7 +4,7 @@
 import unittest
 import pandas as pd
 import numpy as np
-from scorers.scorers import normalized_root_mean_square_error
+from utils.scorers import normalized_root_mean_square_error
 
 
 class TestScorers(unittest.TestCase):

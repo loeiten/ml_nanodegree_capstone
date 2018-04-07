@@ -26,6 +26,7 @@ def target_generator(df, shift_column, target_days, copy=True):
     --------
     >>> import pandas as pd
     >>> import numpy as np
+    >>> from utils.column_modifiers import target_generator
     >>> df = pd.DataFrame(np.array([[1,2,3], [4,5,6], [7,8,9], [10, 11, 12]]),
     ...                   columns=['a', 'b', 'c'])
     >>> target_generator(df, 'c', [1, 2])
@@ -72,6 +73,7 @@ def feature_generator(df, shift_column, days, copy=True):
     --------
     >>> import pandas as pd
     >>> import numpy as np
+    >>> from utils.column_modifiers import feature_generator
     >>> df = pd.DataFrame(np.array([[1,2,3], [4,5,6], [7,8,9], [10, 11, 12]]),
     ...                   columns=['a', 'b', 'c'])
     >>> feature_generator(df, 'b', 3)
@@ -117,6 +119,7 @@ def keep_columns(df, columns, copy=True):
     --------
     >>> import pandas as pd
     >>> import numpy as np
+    >>> from utils.column_modifiers import keep_columns
     >>> df = pd.DataFrame(np.array([[1,2,3], [4,5,6], [7,8,9], [10, 11, 12]]),
     ...                   columns=['a', 'b', 'c'])
     >>> keep_columns(df, ['a', 'c'])
