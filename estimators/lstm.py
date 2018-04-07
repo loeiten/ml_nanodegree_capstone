@@ -64,7 +64,8 @@ class LSTMRegressor(RegressorMixin):
                  optimizer='adam',
                  batch_size=128,
                  epochs=20,
-                 time_steps=1):
+                 time_steps=1,
+                 verbose=0):
         """
         Generates a long time short memory model, sets the model.fit parameters.
 
@@ -87,7 +88,12 @@ class LSTMRegressor(RegressorMixin):
             Number of epochs
         time_steps : int
             Time steps to be used in the RNN.
+        verbose : int
+            Verbosity level
         """
+
+        # Set the verosity level
+        self.verbose = verbose
 
         # Set the seed
         np.random.seed(seed)
@@ -146,7 +152,7 @@ class LSTMRegressor(RegressorMixin):
         self.model.fit(x, y,
                        epochs=self._epochs,
                        batch_size=self._batch_size,
-                       verbose=2,
+                       verbose=self.verbose,
                        callbacks=[self._time_callback],
                        shuffle=False)
 
@@ -158,12 +164,12 @@ class LSTMRegressor(RegressorMixin):
 
         Parameters
         ----------
-        x : array-like, shape (_, n_features)
+        x : array-like, shape (n_samples, n_features)
             The training data.
 
         Returns
         -------
-        y_pred : array, shape (_, n_features)
+        y_pred : array, shape (n_samples, n_features)
             Prediction values.
         """
 
