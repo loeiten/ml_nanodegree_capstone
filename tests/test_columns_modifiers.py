@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from utils.column_modifiers import feature_generator
 from utils.column_modifiers import target_generator
+from utils.column_modifiers import reshift_targets
 from utils.column_modifiers import keep_columns
 
 
@@ -18,7 +19,7 @@ class TestColumnsModifiers(unittest.TestCase):
                                columns=['a', 'b', 'c'],
                                dtype=float)
 
-    def test_feature_generator(self):
+    def test_target_generator(self):
         expected = pd.DataFrame(
             np.array([[1, 2, 3, 6.0, 9.0],
                       [4, 5, 6, 9.0, 12.0],
@@ -29,7 +30,20 @@ class TestColumnsModifiers(unittest.TestCase):
 
         self.assertTrue(expected.equals(result))
 
-    def test_target_generator(self):
+    def test_re_shift_target(self):
+        df = target_generator(self.df, 'c', [1, 2])
+        result = reshift_targets(df, df.index)
+
+        expected = pd.DataFrame(
+            np.array([[1.,  2.,  3., np.nan, np.nan],
+                      [4.,  5.,  6., 6., np.nan],
+                      [7.,  8.,  9., 9.,  9.],
+                      [10., 11., 12., 12., 12.]]),
+            columns=['a', 'b', 'c', 'c + 1 days', 'c + 2 days'])
+
+        self.assertTrue(expected.equals(result))
+
+    def test_feature_generator(self):
         expected = pd.DataFrame(
             np.array([[1, np.nan, np.nan, np.nan, 2, 3],
                       [4, np.nan, np.nan, 2.0, 5, 6],
