@@ -2,52 +2,43 @@
 # -*- coding: utf-8 -*-
 
 
-import numpy as np
-from sklearn.metrics import mean_squared_error
+from utils.column_modifiers import reshift_targets
 
 
-def normalized_root_mean_square_error(true, pred):
+def plot_true_and_prediction(true, pred, columns=None, y_label=''):
     """
-    Calculate the normalized root mean squared error.
-
-    The error is defined as
-
-    $$
-    \frac{\sqrt{\frac{\sum _{i=1}^{n}({\hat {y}}_{i}-y_{i})^{2}}{n}}}}}
-    {y_{\max} - y_{\min}}
-    $$
-    
-    Notes
-    -----
-    In the case of multiple targets, the score is weighted equally between 
-    the targets.
+    Plots the true values against the predictions
 
     Parameters
     ----------
     true : DataFrame
-        The data frame containing the targets in the test set.
+        The data frame containing the true values.
+        Note that in our case this is x_test.
     pred : DataFrame
         The data frame containing the predicted targets.
+    columns : None or list
+        If None, all columns will be plotted.
+        If list: A list of the column numbers to be plotted.
+    y_label : str
+        The y_label of the plot
 
     Returns
     -------
-    error : float
-        The calculated error.
+    ax : matplotlib.axes._subplots.AxesSubplot
+        The axes
     """
 
-    errors = []
+    ax = true.plot()
 
-    # Loop through all the targets
-    for col in range(len(pred.columns)):
-        intersect = true.loc[:, true.columns[col]].dropna().index.\
-            intersection(pred.loc[:, pred.columns[col]].dropna().index)
-        
-        errors.append(
-            mean_squared_error(
-                true.loc[true.index.isin(intersect), true.columns[col]],
-                pred.loc[pred.index.isin(intersect), pred.columns[col]]) /
-            (true.dropna().values.max() - true.dropna().values.min()))
-        
-    error = np.mean(errors)
+    df = reshift_targets(pred, true.index)
+
+    if columns is None:
+        _ = df.plot(ax=ax)
+    else:
+        for col in columns:
+            _ = df.loc[:, [col]].plot(ax=ax)
+
+    ax.grid()
+    _ = ax.set_ylabel(y_label)
     
-    return error
+    return ax
