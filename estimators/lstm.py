@@ -5,6 +5,7 @@ import time
 import numpy as np
 from tensorflow import set_random_seed
 from sklearn.base import RegressorMixin
+from sklearn.linear_model.base import LinearModel
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
@@ -34,7 +35,7 @@ class TimeHistory(Callback):
         self.times.append(time.time() - self.epoch_time_start)
 
 
-class LSTMRegressor(RegressorMixin):
+class LSTMRegressor(RegressorMixin, LinearModel):
     """
     Class for long short time memory.
 
@@ -240,10 +241,8 @@ def prepare_input(x, y, time_steps):
         xy = np.hstack((x, y))
         # Slice so that observations (rows) with not NaNs are selected
         xy = xy[~np.isnan(xy).any(axis=1)]
-        x = xy[:, :-1]
-        y = xy[:, -1]
-        # Make a row vector
-        y = y[:, np.newaxis]
+        x = xy[:, :-y.shape[1]]
+        y = xy[:, -y.shape[1]:]
     else:
         x = x[~np.isnan(x).any(axis=1)]
 
