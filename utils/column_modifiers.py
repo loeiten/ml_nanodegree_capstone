@@ -50,51 +50,6 @@ def target_generator(df, shift_column, target_days, copy=True):
     return df
 
 
-def reshift_targets(df, copy=True):
-    """
-    Reshift targets made by the target generator
-
-    Parameters
-    ----------
-    df : DataFrame
-        The data frame to make the targets on.
-        Note: The column name must end with '[+-] /d+ days'
-    copy : bool
-        If a copy is returned
-
-    Returns
-    -------
-    df : DataFrame
-        The with the reshifted targets
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> from utils.column_modifiers import target_generator
-    >>> df = pd.DataFrame(np.array([[1,2,3], [4,5,6], [7,8,9], [10, 11, 12]]),
-    ...                   columns=['a', 'b', 'c'])
-    >>> target_generator(df, 'c', [1, 2])
-        a   b   c  c + 1 days  c + 2 days
-    0   1   2   3         6.0         9.0
-    1   4   5   6         9.0        12.0
-    2   7   8   9        12.0         NaN
-    3  10  11  12         NaN         NaN
-    """
-    if copy:
-        df = df.copy()
-
-    # Obtain the day of prediction
-    # I.e. for a column named x + 2 days, we would expect the two last rows
-    # to contain nan
-    prediction_days = df.isnull().sum()
-
-    for col, days in zip(df.columns, prediction_days):
-        df[col] = df.loc[:, col].shift(days)
-
-    return df
-
-
 def reshift_targets(df, index, copy=True):
     """
     Reshift targets made by the target generator
