@@ -21,7 +21,8 @@ class TestLatestDay(unittest.TestCase):
     def test_fit(self):
         reg = latest_day.LatestDay()
         reg.fit(self.x, self.y)
-        expected = self.y[-self.days - 1]
+        # NOTE: Not dependent of days
+        expected = self.x[-1, -1]
         self.assertTrue(np.allclose(expected, reg.prediction_values))
 
     def test_predict(self):
@@ -29,8 +30,9 @@ class TestLatestDay(unittest.TestCase):
         reg.fit(self.x, self.y)
         self.assertRaises(ValueError, reg.predict, self.x[:, :-1])
 
+        # NOTE: Not dependent of days
         expected = \
-            np.array([self.y[-self.days-1]]*len(self.x)).reshape(len(self.x), 1)
+            np.array([self.x[-1, -1]]*len(self.x)).reshape(len(self.x), 1)
 
         result = reg.predict(self.x)
 

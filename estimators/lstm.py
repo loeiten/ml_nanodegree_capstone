@@ -5,6 +5,7 @@ import time
 import numpy as np
 from tensorflow import set_random_seed
 from sklearn.base import RegressorMixin
+from sklearn.linear_model.base import LinearModel
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
@@ -34,7 +35,7 @@ class TimeHistory(Callback):
         self.times.append(time.time() - self.epoch_time_start)
 
 
-class LSTMRegressor(RegressorMixin):
+class LSTMRegressor(RegressorMixin, LinearModel):
     """
     Class for long short time memory.
 
@@ -64,7 +65,8 @@ class LSTMRegressor(RegressorMixin):
                  optimizer='adam',
                  batch_size=128,
                  epochs=20,
-                 time_steps=1):
+                 time_steps=1,
+                 verbose=0):
         """
         Generates a long time short memory model, sets the model.fit parameters.
 
@@ -87,7 +89,12 @@ class LSTMRegressor(RegressorMixin):
             Number of epochs
         time_steps : int
             Time steps to be used in the RNN.
+        verbose : int
+            Verbosity level
         """
+
+        # Set the verosity level
+        self.verbose = verbose
 
         # Set the seed
         np.random.seed(seed)
@@ -146,7 +153,7 @@ class LSTMRegressor(RegressorMixin):
         self.model.fit(x, y,
                        epochs=self._epochs,
                        batch_size=self._batch_size,
-                       verbose=2,
+                       verbose=self.verbose,
                        callbacks=[self._time_callback],
                        shuffle=False)
 
@@ -158,12 +165,12 @@ class LSTMRegressor(RegressorMixin):
 
         Parameters
         ----------
-        x : array-like, shape (_, n_features)
+        x : array-like, shape (n_samples, n_features)
             The training data.
 
         Returns
         -------
-        y_pred : array, shape (_, n_features)
+        y_pred : array, shape (n_samples, n_features)
             Prediction values.
         """
 
@@ -234,10 +241,8 @@ def prepare_input(x, y, time_steps):
         xy = np.hstack((x, y))
         # Slice so that observations (rows) with not NaNs are selected
         xy = xy[~np.isnan(xy).any(axis=1)]
-        x = xy[:, :-1]
-        y = xy[:, -1]
-        # Make a row vector
-        y = y[:, np.newaxis]
+        x = xy[:, :-y.shape[1]]
+        y = xy[:, -y.shape[1]:]
     else:
         x = x[~np.isnan(x).any(axis=1)]
 

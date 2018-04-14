@@ -23,6 +23,7 @@ class TestLSTM(unittest.TestCase):
         self.time_step = 2
 
     def test_prepare_input(self):
+        # Single target
         expected_x = np.array([[[0., 1., 2.],
                                 [3., 4., 5.]],
                                [[3., 4., 5.],
@@ -33,6 +34,16 @@ class TestLSTM(unittest.TestCase):
                                 [12., 13., 14.]]])
         expected_y = np.array([[11.], [14.], [17.], [20.]])
         y = self.y[:, np.newaxis]
+        x, y = prepare_input(self.x, y, self.time_step)
+        self.assertTrue(np.allclose(expected_x, x))
+        self.assertTrue(np.allclose(expected_y, y, equal_nan=True))
+
+        # Multiple target
+        expected_y = np.array([[11., 11., 11.],
+                               [14., 14., 14.],
+                               [17., 17., 17.],
+                               [20., 20., 20.]])
+        y = self.y[:, np.newaxis].repeat(3, axis=1)
         x, y = prepare_input(self.x, y, self.time_step)
         self.assertTrue(np.allclose(expected_x, x))
         self.assertTrue(np.allclose(expected_y, y, equal_nan=True))
@@ -80,6 +91,7 @@ class TestLSTM(unittest.TestCase):
     def test_predict(self):
         reg = lstm.LSTMRegressor(seed=42, epochs=1)
         self.assertRaises(RuntimeError, reg.predict, self.x)
+
         reg.fit(self.x, self.y)
 
         result = reg.predict(self.x)
