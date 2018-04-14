@@ -123,7 +123,7 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
             #       The first prediction is using data only from the test set.
             #       x_test.iloc[0] returns the first element
             y_pred[pred_nr] = \
-                reg.predict(x_test.iloc[pred_nr].values[:, np.newaxis])[-1]
+                reg.predict(x_test.iloc[pred_nr].values[np.newaxis, :])[-1]
 
         # Cast the result into a DataFrame for easier post-processing
         # The indexing from y_test includes the first days where there will
