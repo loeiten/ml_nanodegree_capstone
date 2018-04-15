@@ -57,7 +57,7 @@ def plot_true_and_prediction(true, pred, columns=None, y_label=''):
     return ax
 
 
-def plot_scores(training_socres, validation_scores, title=''):
+def plot_scores(training_socres, validation_scores, x_label='', title=''):
     """
     Plots the scores
 
@@ -71,6 +71,8 @@ def plot_scores(training_socres, validation_scores, title=''):
         Dictionary on the form
         >>> {stock : {day : score}}
         Where stock is a string, day is a int, and score is a float
+    x_label : str
+        Label for the x-axis
     title : str
         Title for the plot
 
@@ -99,7 +101,7 @@ def plot_scores(training_socres, validation_scores, title=''):
                     label=key + ' training')
 
     ax.grid()
-    _ = ax.set_xlabel('Days')
+    _ = ax.set_xlabel(x_label)
     _ = ax.set_ylabel('Error')
     ax.legend(loc='best', fancybox=True, framealpha=0.5, ncol=2)
     ax.set_title(title)
