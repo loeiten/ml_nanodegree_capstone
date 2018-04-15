@@ -32,9 +32,9 @@ def calculate_rolling_prediction(reg,
 
     Notes
     -----
-    The y_test cannot contain any nans, with exception of possible nans at the
-    end originating from the shift as shown in
-    utils.column_modifiers.target_generator
+    The training prediction in the rolling prediction predicts on the last
+    rolled value, whereas the training prediction in the normal prediction
+    predicts on the input training set.
 
     Parameters
     ----------
@@ -188,6 +188,8 @@ def calculate_normal_prediction(reg,
                                 x_test,
                                 y_train,
                                 y_test,
+                                prediction_days,
+                                training_prediction=False,
                                 use_multi_output_regressor=True,
                                 consistent_with_rolling=True):
     """
@@ -198,9 +200,10 @@ def calculate_normal_prediction(reg,
 
     Notes
     -----
-    The y_test cannot contain any nans, with exception of possible nans at the
-    end originating from the shift as shown in
-    utils.column_modifiers.target_generator
+    The training prediction in the rolling prediction predicts on the last
+    rolled value, whereas the training prediction in the normal prediction
+    predicts on the input training set.
+    Hence, consistent_with_rolling will not have any effect on train_pred_df.
 
     Parameters
     ----------
@@ -214,17 +217,29 @@ def calculate_normal_prediction(reg,
         The targets of the training set
     y_test :  DataFrame, shape (n_test_samples, n_targets)
         The targets of the test set
+    prediction_days : array-like, shape (n_targets)
+        The number of days the targets aim to predict.
+        Is only effective when consistent_with_rolling is True
+    training_prediction : bool
+        Whether or not predictions should be made on the training set
     use_multi_output_regressor : bool
         Use sklearn's multi output regressor. This must be used when the
         estimator does not support multiple predictions out of the box.
     consistent_with_rolling : bool
         The output will be on the same form as that obtained from
-        calculate_rolling_prediction
+        calculate_rolling_prediction.
+        Will not have any effect on train_pred_df (see notes above).
 
     Returns
     -------
     pred_df : DataFrame
         The DataFrame containing the predictions.
+    train_pred_df : DataFrame, shape (n_test_samples - min_nans, n_targets)
+        The DataFrame containing the predictions on the fitted training set.
+        Is shifted one index compared to the pred_df.
+        The minimum amount of trailing NaNs will be stripped from the end.
+        consistent_with_rolling will not have any effect on this output (see
+        notes above).
 
     Examples
     --------
@@ -265,8 +280,18 @@ def calculate_normal_prediction(reg,
     if use_multi_output_regressor:
         reg = MultiOutputRegressor(reg)
 
+    # If feature_generator has been used, then NaNs have been
+    # introduced in the training set. We remove these
+    introduced_nans = x_train.isnull().sum().max()
+    x_train = x_train.iloc[introduced_nans:]
+    y_train = y_train.iloc[introduced_nans:]
+
     reg.fit(x_train.values, y_train.values)
+
     y_pred = reg.predict(x_test.values)
+
+    if training_prediction:
+        y_train_pred = reg.predict(x_train.values)
 
     # Cast the result into a DataFrame for easier post-processing
     # The indexing from y_test includes the first days where there will
@@ -278,18 +303,31 @@ def calculate_normal_prediction(reg,
                            index=y_test.index,
                            columns=columns)
 
-    if consistent_with_rolling:
-        # Obtain the day of prediction
-        # I.e. for a column named x + 2 days, we would expect the two last rows
-        # to contain nan
-        prediction_days = y_test.isnull().sum()
+    if training_prediction:
+        train_pred_df = pd.DataFrame(y_train_pred,
+                                     index=y_train.index,
+                                     columns=columns)
 
-        # Replace with nans (we are actually making more predictions than we
+    if consistent_with_rolling:
+        # Replace with NaNs (we are actually making more predictions than we
         # need)
         for days, col in zip(prediction_days, columns):
             pred_df.loc[pred_df.index[-days:], col] = np.nan
+            if training_prediction:
+                train_pred_df.loc[train_pred_df.index[-days:], col] = np.nan
 
         # Remove predictions where we do not have any targets
         pred_df = pred_df.iloc[:-prediction_days.min()]
+
+        if training_prediction:
+            train_pred_df = train_pred_df.iloc[:-prediction_days.min()]
+
+    if training_prediction:
+        # Rename columns for training prediction
+        columns = [col + ' fit prediction' for col in y_test.columns]
+
+        train_pred_df.columns = columns
+
+        return pred_df, train_pred_df
 
     return pred_df

@@ -107,10 +107,34 @@ class TestPredictions(unittest.TestCase):
                                         self.x_train,
                                         self.x_test,
                                         self.y_train,
-                                        self.y_test)
+                                        self.y_test,
+                                        self.prediction_days)
 
         self.assertTrue(np.allclose(result.values,
                                     expected.values,
+                                    equal_nan=True))
+
+        result, train_result = \
+            calculate_normal_prediction(reg,
+                                        self.x_train,
+                                        self.x_test,
+                                        self.y_train,
+                                        self.y_test,
+                                        self.prediction_days,
+                                        training_prediction=True)
+
+        self.assertTrue(np.allclose(result.values,
+                                    expected.values,
+                                    equal_nan=True))
+
+        train_expected = pd.DataFrame(np.array(
+            [[2., 3.],
+             [3., np.nan]]),
+            columns=['x + 2 days fit prediction', 'x + 3 days fit prediction'],
+            index=range(0, 2))
+
+        self.assertTrue(np.allclose(train_result.values,
+                                    train_expected.values,
                                     equal_nan=True))
 
     def test_same_results(self):
@@ -122,7 +146,8 @@ class TestPredictions(unittest.TestCase):
                                         self.x_train,
                                         self.x_test,
                                         self.y_train,
-                                        self.y_test)
+                                        self.y_test,
+                                         self.prediction_days)
         result = \
             calculate_rolling_prediction(reg,
                                          self.x_train,
