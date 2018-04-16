@@ -299,6 +299,9 @@ def make_model(cells,
         The sequential model.
     """
 
+    # Sanitize cells
+    cells = [cell for cell in cells if cell != 0]
+
     model = Sequential()
 
     # Create the initial LSTM layer
