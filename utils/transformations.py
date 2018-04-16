@@ -17,8 +17,26 @@ class StockMinMax(object):
 
     Examples
     --------
-    FIXME
-
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from utils.transformations import StockMinMax
+    >>> scaler = StockMinMax()
+    >>> df = pd.DataFrame(np.array([[1,2,3], [4,5,6], [7,8,9], [10, 11, 12]]),
+    ...                   columns=['a', 'b', 'c'])
+    >>> scaler.fit(df)
+    >>> transformed = scaler.transform(df)
+    >>> transformed
+              a         b         c
+    0  0.000000  0.000000  0.000000
+    1  0.333333  0.333333  0.333333
+    2  0.666667  0.666667  0.666667
+    3  1.000000  1.000000  1.000000
+    >>> scaler.inverse_transform(transformed)
+          a     b     c
+    0   1.0   2.0   3.0
+    1   4.0   5.0   6.0
+    2   7.0   8.0   9.0
+    3  10.0  11.0  12.0
     """
 
     def __init__(self):

@@ -74,14 +74,16 @@ def reshift_targets(df, index, copy=True):
     >>> import pandas as pd
     >>> import numpy as np
     >>> from utils.column_modifiers import target_generator
+    >>> from utils.column_modifiers import reshift_targets
     >>> df = pd.DataFrame(np.array([[1,2,3], [4,5,6], [7,8,9], [10, 11, 12]]),
     ...                   columns=['a', 'b', 'c'])
-    >>> target_generator(df, 'c', [1, 2])
+    >>> tg = target_generator(df, 'c', [1, 2])
+    >>> reshift_targets(tg, tg.index)
         a   b   c  c + 1 days  c + 2 days
-    0   1   2   3         6.0         9.0
-    1   4   5   6         9.0        12.0
-    2   7   8   9        12.0         NaN
-    3  10  11  12         NaN         NaN
+    0   1   2   3         NaN         NaN
+    1   4   5   6         6.0         NaN
+    2   7   8   9         9.0         9.0
+    3  10  11  12        12.0        12.0
     """
     if copy:
         df = df.copy()

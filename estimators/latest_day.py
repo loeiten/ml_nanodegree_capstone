@@ -29,8 +29,7 @@ class LatestDay(RegressorMixin, LinearModel):
     >>> y = np.array([6, 7, np.nan])
     >>> reg.fit(x, y)
     >>> reg.predict(np.array([[10, 11, 12], [13, 14, 15]]))
-    array([[7.],
-           [7.]])
+    array([9., 9.])
     """
 
     def __init__(self):

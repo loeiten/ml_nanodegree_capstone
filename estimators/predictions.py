@@ -85,17 +85,15 @@ def calculate_rolling_prediction(reg,
     >>> x_train, x_test, y_train, y_test = \
     ...     train_test_split(x, y, shuffle=False, test_size=12)
     >>> reg = linear_model.LinearRegression()
-    >>> calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test)
-        x + 2 days  x + 3 days
-    5          5.0         NaN
-    6          6.0         6.0
-    7          7.0         7.0
-    8          8.0         8.0
-    9          9.0         9.0
-    10        10.0        10.0
-    11        11.0        11.0
-    12        12.0        12.0
-    13        13.0         NaN
+    >>> prediction_days = y.isnull().sum()
+    >>> calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test,
+    ...     prediction_days)
+        x + 2 days predicted  x + 3 days predicted
+    4                    6.0                   7.0
+    5                    7.0                   8.0
+    6                    8.0                   9.0
+    7                    9.0                  10.0
+    8                   10.0                  11.0
     """
 
     # Initialize the DataFrames list
@@ -263,7 +261,9 @@ def calculate_normal_prediction(reg,
     >>> x_train, x_test, y_train, y_test = \
     ...     train_test_split(x, y, shuffle=False, test_size=12)
     >>> reg = linear_model.LinearRegression()
-    >>> calculate_normal_prediction(reg, x_train, x_test, y_train, y_test)
+    >>> prediction_days = y.isnull().sum()
+    >>> calculate_normal_prediction(reg, x_train, x_test, y_train, y_test,
+    ...     prediction_days)
         x + 2 days predicted  x + 3 days predicted
     4                    6.0                   7.0
     5                    7.0                   8.0
