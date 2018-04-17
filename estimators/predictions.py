@@ -5,6 +5,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.multioutput import MultiOutputRegressor
+from estimators.lstm import LSTMRegressor
 
 
 def calculate_rolling_prediction(reg,
@@ -157,16 +158,32 @@ def calculate_rolling_prediction(reg,
                     reg.predict(rolling_x.iloc[-1].values[np.newaxis, :])[-1]
 
         # Cast the result into a DataFrame for easier post-processing
-        # The indexing from y_test includes the first days where there will
-        # be no prediction for (except the one done from the pure training
-        # set), and the nan values at the end of y_test due to the shift
+        # The indexing from y_test has NaN values at the end because of to the
+        # shift from target_generator
+        index = y_test_cur_col.index[: -days]
+
+        if type(reg) == LSTMRegressor:
+            # If time_steps have been used in the lstm prediction, x and y has
+            # been casted so that the time_steps-1 targets in the start of the
+            # series are missing. We remove these indices here
+            index = index[len(index) - y_pred.shape[0]:]
+
         pred_list.append(pd.DataFrame(y_pred,
-                         index=y_test_cur_col.index[: -days],
+                         index=index,
                          columns=[y_test_cur_col.name + ' predicted']))
 
         if training_prediction:
+            # Training prediction lags the normal prediction with one day,
+            # so we must include this in the index
             index = list([y_train_cur_col.index[-1],
                           *y_test_cur_col.index[: -days - 1]])
+
+            if type(reg) == LSTMRegressor:
+                # If time_steps have been used in the lstm prediction, x and y
+                # has been casted so that the time_steps-1 targets in the
+                # start of the series are missing. We remove these indices here
+                index = index[len(index) - y_train_pred.shape[0]:]
+
             train_pred_list.append(
                 pd.DataFrame(y_train_pred,
                              index=index,
@@ -294,18 +311,31 @@ def calculate_normal_prediction(reg,
         y_train_pred = reg.predict(x_train.values)
 
     # Cast the result into a DataFrame for easier post-processing
-    # The indexing from y_test includes the first days where there will
-    # be no prediction for (except the one done from the pure training
-    # set), and the nan values at the end of y_test due to the shift
     columns = [col + ' predicted' for col in y_test.columns]
 
+    index = y_test.index
+
+    if type(reg) == LSTMRegressor:
+        # If time_steps have been used in the lstm prediction, x and y has
+        # been casted so that the time_steps-1 targets in the start of the
+        # series are missing. We remove these indices here
+        index = index[len(index) - y_pred.shape[0]:]
+
     pred_df = pd.DataFrame(y_pred,
-                           index=y_test.index,
+                           index=index,
                            columns=columns)
 
     if training_prediction:
+        index = y_train.index
+
+        if type(reg) == LSTMRegressor:
+            # If time_steps have been used in the lstm prediction, x and y has
+            # been casted so that the time_steps-1 targets in the start of the
+            # series are missing. We remove these indices here
+            index = index[len(index) - y_train_pred.shape[0]:]
+
         train_pred_df = pd.DataFrame(y_train_pred,
-                                     index=y_train.index,
+                                     index=index,
                                      columns=columns)
 
     if consistent_with_rolling:

@@ -221,6 +221,7 @@ def prepare_input(x, y, time_steps):
     Examples
     --------
     >>> import numpy as np
+    >>> from estimators.lstm import prepare_input
     >>> nan = np.nan
     >>> x = np.array([[1, 10], [nan, 20], [3, 30], [4, 40], [5, 50], [6, 60]])
     >>> y = np.array([[2], [3], [4], [5], [6], [nan]])
