@@ -147,7 +147,7 @@ class TestPredictions(unittest.TestCase):
                                         self.x_test,
                                         self.y_train,
                                         self.y_test,
-                                         self.prediction_days)
+                                        self.prediction_days)
         result = \
             calculate_rolling_prediction(reg,
                                          self.x_train,

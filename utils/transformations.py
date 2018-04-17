@@ -156,6 +156,8 @@ def subtract_previous_row(df, cols=None, copy=False):
     cols : None or list
         If None, the transformation will be applied to all columns.
         If list the column in the list will be transformed.
+    copy : bool
+        If True the df is copied before manipulation.
 
     Returns
     -------

@@ -93,7 +93,7 @@ class LSTMRegressor(RegressorMixin, LinearModel):
             Verbosity level
         """
 
-        # Set the verosity level
+        # Set the verbosity level
         self.verbose = verbose
 
         # Set the seed
@@ -205,7 +205,7 @@ def prepare_input(x, y, time_steps):
     ----------
     x : array-like, shape (n_samples, n_features)
         The training data.
-    y : array-like, shape (n_samples, n_targets) or None
+    y : array-like or None, shape (n_samples, n_targets)
         The target values.
     time_steps : int
         Time steps to be used in the RNN.

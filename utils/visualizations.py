@@ -57,7 +57,7 @@ def plot_true_and_prediction(true, pred, columns=None, y_label=''):
     return ax
 
 
-def plot_scores(training_socres, validation_scores, x_label='', title=''):
+def plot_scores(training_scores, validation_scores, x_label='', title=''):
     """
     Plots the scores
 
@@ -85,16 +85,16 @@ def plot_scores(training_socres, validation_scores, x_label='', title=''):
     _, ax = plt.subplots()
     colors = list()
 
-    for key in training_socres.keys():
+    for key in training_scores.keys():
         lines = ax.plot(validation_scores[key].keys(),
                         validation_scores[key].values(),
                         alpha=0.7,
                         label=key + ' validation')
         colors.append(lines[0].get_color())
 
-    for key, color in zip(training_socres.keys(), colors):
-        _ = ax.plot(training_socres[key].keys(),
-                    training_socres[key].values(),
+    for key, color in zip(training_scores.keys(), colors):
+        _ = ax.plot(training_scores[key].keys(),
+                    training_scores[key].values(),
                     linestyle='--',
                     color=color,
                     alpha=0.7,
