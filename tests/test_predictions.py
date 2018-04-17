@@ -20,6 +20,11 @@ class TestPredictions(unittest.TestCase):
         self.x_train, self.x_test, self.y_train, self.y_test = \
             train_test_split(x, y, shuffle=False, test_size=12)
 
+        # Obtain the day of prediction
+        # I.e. for a column named x + 2 days, we would expect the two last rows
+        # to contain nan
+        self.prediction_days = self.y_test.isnull().sum()
+
     def test_calculate_rolling_prediction(self):
         expected = pd.DataFrame(np.array(
             [[6., 7.],
@@ -42,10 +47,42 @@ class TestPredictions(unittest.TestCase):
                                          self.x_train,
                                          self.x_test,
                                          self.y_train,
-                                         self.y_test)
+                                         self.y_test,
+                                         self.prediction_days)
 
         self.assertTrue(np.allclose(result.values,
                                     expected.values,
+                                    equal_nan=True))
+
+        result, train_result = \
+            calculate_rolling_prediction(reg,
+                                         self.x_train,
+                                         self.x_test,
+                                         self.y_train,
+                                         self.y_test,
+                                         self.prediction_days,
+                                         training_prediction=True)
+
+        self.assertTrue(np.allclose(result.values,
+                                    expected.values,
+                                    equal_nan=True))
+
+        train_expected = pd.DataFrame(np.array(
+            [[5., 6.],
+             [6., 7.],
+             [7., 8.],
+             [8., 9.],
+             [9., 10.],
+             [10., 11.],
+             [11., 12.],
+             [12., 13.],
+             [13., 14.],
+             [14., np.nan]]),
+            columns=['x + 2 days fit prediction', 'x + 3 days fit prediction'],
+            index=range(3, 13))
+
+        self.assertTrue(np.allclose(train_result.values,
+                                    train_expected.values,
                                     equal_nan=True))
 
     def test_calculate_normal_prediction(self):
@@ -70,10 +107,34 @@ class TestPredictions(unittest.TestCase):
                                         self.x_train,
                                         self.x_test,
                                         self.y_train,
-                                        self.y_test)
+                                        self.y_test,
+                                        self.prediction_days)
 
         self.assertTrue(np.allclose(result.values,
                                     expected.values,
+                                    equal_nan=True))
+
+        result, train_result = \
+            calculate_normal_prediction(reg,
+                                        self.x_train,
+                                        self.x_test,
+                                        self.y_train,
+                                        self.y_test,
+                                        self.prediction_days,
+                                        training_prediction=True)
+
+        self.assertTrue(np.allclose(result.values,
+                                    expected.values,
+                                    equal_nan=True))
+
+        train_expected = pd.DataFrame(np.array(
+            [[2., 3.],
+             [3., np.nan]]),
+            columns=['x + 2 days fit prediction', 'x + 3 days fit prediction'],
+            index=range(0, 2))
+
+        self.assertTrue(np.allclose(train_result.values,
+                                    train_expected.values,
                                     equal_nan=True))
 
     def test_same_results(self):
@@ -85,13 +146,15 @@ class TestPredictions(unittest.TestCase):
                                         self.x_train,
                                         self.x_test,
                                         self.y_train,
-                                        self.y_test)
+                                        self.y_test,
+                                        self.prediction_days)
         result = \
             calculate_rolling_prediction(reg,
                                          self.x_train,
                                          self.x_test,
                                          self.y_train,
-                                         self.y_test)
+                                         self.y_test,
+                                         self.prediction_days)
 
         self.assertTrue(np.allclose(result.values,
                                     expected.values,

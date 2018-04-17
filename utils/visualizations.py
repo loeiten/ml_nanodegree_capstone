@@ -3,6 +3,7 @@
 
 
 from utils.column_modifiers import reshift_targets
+import matplotlib.pyplot as plt
 
 
 def plot_true_and_prediction(true, pred, columns=None, y_label=''):
@@ -28,17 +29,81 @@ def plot_true_and_prediction(true, pred, columns=None, y_label=''):
         The axes
     """
 
-    ax = true.plot()
-
-    df = reshift_targets(pred, true.index)
+    ax = None
 
     if columns is None:
-        _ = df.plot(ax=ax)
+        ax = true.plot(alpha=0.7)
     else:
         for col in columns:
-            _ = df.loc[:, [col]].plot(ax=ax)
+            if ax is not None:
+                _ = true.loc[:, [col]].plot(ax=ax)
+            else:
+                ax = true.loc[:, [col]].plot(alpha=0.7)
+
+    df = reshift_targets(pred, true.index)
+    df_cols = df.columns
+
+    if columns is None:
+        _ = df.plot(ax=ax, alpha=0.7)
+    else:
+        for df_col in df_cols:
+            for col in columns:
+                if col in df_col:
+                    _ = df.loc[:, [df_col]].plot(ax=ax, alpha=0.7)
 
     ax.grid()
     _ = ax.set_ylabel(y_label)
     
+    return ax
+
+
+def plot_scores(training_scores, validation_scores, x_label='', title=''):
+    """
+    Plots the scores
+
+    Parameters
+    ----------
+    training_scores : dict
+        Dictionary on the form
+        >>> {stock : {day : score}}
+        Where stock is a string, day is a int, and score is a float
+    validation_scores : dict
+        Dictionary on the form
+        >>> {stock : {day : score}}
+        Where stock is a string, day is a int, and score is a float
+    x_label : str
+        Label for the x-axis
+    title : str
+        Title for the plot
+
+    Returns
+    -------
+    ax : matplotlib.axes._subplots.AxesSubplot
+        The axes
+    """
+
+    _, ax = plt.subplots()
+    colors = list()
+
+    for key in training_scores.keys():
+        lines = ax.plot(validation_scores[key].keys(),
+                        validation_scores[key].values(),
+                        alpha=0.7,
+                        label=key + ' validation')
+        colors.append(lines[0].get_color())
+
+    for key, color in zip(training_scores.keys(), colors):
+        _ = ax.plot(training_scores[key].keys(),
+                    training_scores[key].values(),
+                    linestyle='--',
+                    color=color,
+                    alpha=0.7,
+                    label=key + ' training')
+
+    ax.grid()
+    _ = ax.set_xlabel(x_label)
+    _ = ax.set_ylabel('Error')
+    ax.legend(loc='best', fancybox=True, framealpha=0.5, ncol=2)
+    ax.set_title(title)
+
     return ax

@@ -5,9 +5,16 @@
 import pandas as pd
 import numpy as np
 from sklearn.multioutput import MultiOutputRegressor
+from estimators.lstm import LSTMRegressor
 
 
-def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
+def calculate_rolling_prediction(reg,
+                                 x_train,
+                                 x_test,
+                                 y_train,
+                                 y_test,
+                                 prediction_days,
+                                 training_prediction=False):
     """
     Returns a rolling prediction.
 
@@ -26,9 +33,9 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
 
     Notes
     -----
-    The y_test cannot contain any nans, with exception of possible nans at the
-    end originating from the shift as shown in
-    utils.column_modifiers.target_generator
+    The training prediction in the rolling prediction predicts on the last
+    rolled value, whereas the training prediction in the normal prediction
+    predicts on the input training set.
 
     Parameters
     ----------
@@ -42,11 +49,20 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
         The targets of the training set
     y_test :  DataFrame, shape (n_test_samples, n_targets)
         The targets of the test set
+    prediction_days : array-like, shape (n_targets)
+        The number of days the targets aim to predict
+    training_prediction : bool
+        Whether or not predictions should be made on the training set
 
     Returns
     -------
-    pred_df : DataFrame
+    pred_df : DataFrame, shape (n_test_samples - min_nans, n_targets)
         The DataFrame containing the predictions.
+        The minimum amount of trailing NaNs will be stripped from the end.
+    train_pred_df : DataFrame, shape (n_test_samples - min_nans, n_targets)
+        The DataFrame containing the predictions on the fitted training set.
+        Is shifted one index compared to the pred_df.
+        The minimum amount of trailing NaNs will be stripped from the end.
 
     Examples
     --------
@@ -70,26 +86,28 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
     >>> x_train, x_test, y_train, y_test = \
     ...     train_test_split(x, y, shuffle=False, test_size=12)
     >>> reg = linear_model.LinearRegression()
-    >>> calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test)
-        x + 2 days  x + 3 days
-    5          5.0         NaN
-    6          6.0         6.0
-    7          7.0         7.0
-    8          8.0         8.0
-    9          9.0         9.0
-    10        10.0        10.0
-    11        11.0        11.0
-    12        12.0        12.0
-    13        13.0         NaN
+    >>> prediction_days = y.isnull().sum()
+    >>> calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test,
+    ...     prediction_days)
+        x + 2 days predicted  x + 3 days predicted
+    4                    6.0                   7.0
+    5                    7.0                   8.0
+    6                    8.0                   9.0
+    7                    9.0                  10.0
+    8                   10.0                  11.0
     """
 
     # Initialize the DataFrames list
-    df_list = []
+    pred_list = list()
 
-    # Obtain the day of prediction
-    # I.e. for a column named x + 2 days, we would expect the two last rows
-    # to contain nan
-    prediction_days = y_test.isnull().sum()
+    if training_prediction:
+        train_pred_list = list()
+
+    # If feature_generator has been used, then NaNs have been
+    # introduced in the training set. We remove these
+    introduced_nans = x_train.isnull().sum().max()
+    x_train = x_train.iloc[introduced_nans:]
+    y_train = y_train.iloc[introduced_nans:]
 
     # Do the rolling prediction for each of the columns in y
     for col_ind in range(len(y_test.columns)):
@@ -106,6 +124,9 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
         # due to the shift)
         y_pred = np.empty(y_test_cur_col.shape[0] - days)
 
+        if training_prediction:
+            y_train_pred = np.empty(y_test_cur_col.shape[0] - days)
+
         for pred_nr in range(len(y_pred)):
             # Extend the training data
             # NOTE: x_test.iloc[:0] will return an empty DataFrame
@@ -114,26 +135,65 @@ def calculate_rolling_prediction(reg, x_train, x_test, y_train, y_test):
             rolling_y = pd.concat([y_train_cur_col,
                                    y_test_cur_col.iloc[:pred_nr]],
                                   axis=0)
+
             # Fit (retrain) the model with the rolling_features set
             reg.fit(rolling_x.values, rolling_y.values)
             # Make prediction and append to y_pred
             # Predict for test value after the test value which was just
             # included to rolling_x
             # NOTE: There are as many predictions as the length of y_pred.
-            #       The first prediction is using data only from the test set.
+            #       The first prediction is using data only from the training
+            #       set.
             #       x_test.iloc[0] returns the first element
             y_pred[pred_nr] = \
-                reg.predict(x_test.iloc[pred_nr].values[:, np.newaxis])[-1]
+                reg.predict(x_test.iloc[pred_nr].values[np.newaxis, :])[-1]
+
+            if training_prediction:
+                # NOTE: When fitting, we use the data until (but no
+                #       including) the pred_nr index of x_test.
+                #       y_pred_train is making a prediction on this element,
+                #       whereas y_pred is making a prediction on the next
+                #       element
+                y_train_pred[pred_nr] = \
+                    reg.predict(rolling_x.iloc[-1].values[np.newaxis, :])[-1]
 
         # Cast the result into a DataFrame for easier post-processing
-        # The indexing from y_test includes the first days where there will
-        # be no prediction for (except the one done from the pure training
-        # set), and the nan values at the end of y_test due to the shift
-        df_list.append(pd.DataFrame(y_pred,
-                       index=y_test_cur_col.index[: -days],
-                       columns=[y_test_cur_col.name + ' predicted']))
+        # The indexing from y_test has NaN values at the end because of to the
+        # shift from target_generator
+        index = y_test_cur_col.index[: -days]
 
-    pred_df = pd.concat(df_list, axis=1)
+        if type(reg) == LSTMRegressor:
+            # If time_steps have been used in the lstm prediction, x and y has
+            # been casted so that the time_steps-1 targets in the start of the
+            # series are missing. We remove these indices here
+            index = index[len(index) - y_pred.shape[0]:]
+
+        pred_list.append(pd.DataFrame(y_pred,
+                         index=index,
+                         columns=[y_test_cur_col.name + ' predicted']))
+
+        if training_prediction:
+            # Training prediction lags the normal prediction with one day,
+            # so we must include this in the index
+            index = list([y_train_cur_col.index[-1],
+                          *y_test_cur_col.index[: -days - 1]])
+
+            if type(reg) == LSTMRegressor:
+                # If time_steps have been used in the lstm prediction, x and y
+                # has been casted so that the time_steps-1 targets in the
+                # start of the series are missing. We remove these indices here
+                index = index[len(index) - y_train_pred.shape[0]:]
+
+            train_pred_list.append(
+                pd.DataFrame(y_train_pred,
+                             index=index,
+                             columns=[y_test_cur_col.name + ' fit prediction']))
+
+    pred_df = pd.concat(pred_list, axis=1)
+    if training_prediction:
+        train_pred_df = pd.concat(train_pred_list, axis=1)
+
+        return pred_df, train_pred_df
 
     return pred_df
 
@@ -143,6 +203,8 @@ def calculate_normal_prediction(reg,
                                 x_test,
                                 y_train,
                                 y_test,
+                                prediction_days,
+                                training_prediction=False,
                                 use_multi_output_regressor=True,
                                 consistent_with_rolling=True):
     """
@@ -153,9 +215,10 @@ def calculate_normal_prediction(reg,
 
     Notes
     -----
-    The y_test cannot contain any nans, with exception of possible nans at the
-    end originating from the shift as shown in
-    utils.column_modifiers.target_generator
+    The training prediction in the rolling prediction predicts on the last
+    rolled value, whereas the training prediction in the normal prediction
+    predicts on the input training set.
+    Hence, consistent_with_rolling will not have any effect on train_pred_df.
 
     Parameters
     ----------
@@ -169,17 +232,29 @@ def calculate_normal_prediction(reg,
         The targets of the training set
     y_test :  DataFrame, shape (n_test_samples, n_targets)
         The targets of the test set
+    prediction_days : array-like, shape (n_targets)
+        The number of days the targets aim to predict.
+        Is only effective when consistent_with_rolling is True
+    training_prediction : bool
+        Whether or not predictions should be made on the training set
     use_multi_output_regressor : bool
         Use sklearn's multi output regressor. This must be used when the
         estimator does not support multiple predictions out of the box.
     consistent_with_rolling : bool
         The output will be on the same form as that obtained from
-        calculate_rolling_prediction
+        calculate_rolling_prediction.
+        Will not have any effect on train_pred_df (see notes above).
 
     Returns
     -------
     pred_df : DataFrame
         The DataFrame containing the predictions.
+    train_pred_df : DataFrame, shape (n_test_samples - min_nans, n_targets)
+        The DataFrame containing the predictions on the fitted training set.
+        Is shifted one index compared to the pred_df.
+        The minimum amount of trailing NaNs will be stripped from the end.
+        consistent_with_rolling will not have any effect on this output (see
+        notes above).
 
     Examples
     --------
@@ -203,7 +278,9 @@ def calculate_normal_prediction(reg,
     >>> x_train, x_test, y_train, y_test = \
     ...     train_test_split(x, y, shuffle=False, test_size=12)
     >>> reg = linear_model.LinearRegression()
-    >>> calculate_normal_prediction(reg, x_train, x_test, y_train, y_test)
+    >>> prediction_days = y.isnull().sum()
+    >>> calculate_normal_prediction(reg, x_train, x_test, y_train, y_test,
+    ...     prediction_days)
         x + 2 days predicted  x + 3 days predicted
     4                    6.0                   7.0
     5                    7.0                   8.0
@@ -220,31 +297,67 @@ def calculate_normal_prediction(reg,
     if use_multi_output_regressor:
         reg = MultiOutputRegressor(reg)
 
+    # If feature_generator has been used, then NaNs have been
+    # introduced in the training set. We remove these
+    introduced_nans = x_train.isnull().sum().max()
+    x_train = x_train.iloc[introduced_nans:]
+    y_train = y_train.iloc[introduced_nans:]
+
     reg.fit(x_train.values, y_train.values)
+
     y_pred = reg.predict(x_test.values)
 
+    if training_prediction:
+        y_train_pred = reg.predict(x_train.values)
+
     # Cast the result into a DataFrame for easier post-processing
-    # The indexing from y_test includes the first days where there will
-    # be no prediction for (except the one done from the pure training
-    # set), and the nan values at the end of y_test due to the shift
     columns = [col + ' predicted' for col in y_test.columns]
 
+    index = y_test.index
+
+    if type(reg) == LSTMRegressor:
+        # If time_steps have been used in the lstm prediction, x and y has
+        # been casted so that the time_steps-1 targets in the start of the
+        # series are missing. We remove these indices here
+        index = index[len(index) - y_pred.shape[0]:]
+
     pred_df = pd.DataFrame(y_pred,
-                           index=y_test.index,
+                           index=index,
                            columns=columns)
 
-    if consistent_with_rolling:
-        # Obtain the day of prediction
-        # I.e. for a column named x + 2 days, we would expect the two last rows
-        # to contain nan
-        prediction_days = y_test.isnull().sum()
+    if training_prediction:
+        index = y_train.index
 
-        # Replace with nans (we are actually making more predictions than we
+        if type(reg) == LSTMRegressor:
+            # If time_steps have been used in the lstm prediction, x and y has
+            # been casted so that the time_steps-1 targets in the start of the
+            # series are missing. We remove these indices here
+            index = index[len(index) - y_train_pred.shape[0]:]
+
+        train_pred_df = pd.DataFrame(y_train_pred,
+                                     index=index,
+                                     columns=columns)
+
+    if consistent_with_rolling:
+        # Replace with NaNs (we are actually making more predictions than we
         # need)
         for days, col in zip(prediction_days, columns):
             pred_df.loc[pred_df.index[-days:], col] = np.nan
+            if training_prediction:
+                train_pred_df.loc[train_pred_df.index[-days:], col] = np.nan
 
         # Remove predictions where we do not have any targets
         pred_df = pred_df.iloc[:-prediction_days.min()]
+
+        if training_prediction:
+            train_pred_df = train_pred_df.iloc[:-prediction_days.min()]
+
+    if training_prediction:
+        # Rename columns for training prediction
+        columns = [col + ' fit prediction' for col in y_test.columns]
+
+        train_pred_df.columns = columns
+
+        return pred_df, train_pred_df
 
     return pred_df
