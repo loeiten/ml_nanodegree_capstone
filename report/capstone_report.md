@@ -1,6 +1,6 @@
 # Machine Learning Engineer Nanodegree
 ## Capstone Project
-April 21st, 2018
+April 22nd, 2018
 
 Michael Løiten
 
@@ -221,31 +221,240 @@ $$
 to assess the error.
 
 ## II. Analysis
-_(approx. 2-4 pages)_
 
 ### Data Exploration
-In this section, you will be expected to analyze the data you are using for the problem. This data can either be in the form of a dataset (or datasets), input data (or input files), or even an environment. The type of data should be thoroughly described and, if possible, have basic statistics and information presented (such as discussion of input features or defining characteristics about the input or environment). Any abnormalities or interesting qualities about the data that may need to be addressed have been identified (such as features that need to be transformed or the possibility of outliers). Questions to ask yourself when writing this section:
-- _If a dataset is present for this problem, have you thoroughly discussed certain features about the dataset? Has a data sample been provided to the reader?_
-- _If a dataset is present for this problem, are statistics about the dataset calculated and reported? Have any relevant results from this calculation been discussed?_
-- _If a dataset is **not** present for this problem, has discussion been made about the input space or input data for your problem?_
-- _Are there any abnormalities or characteristics about the input space or dataset that need to be addressed? (categorical variables, missing values, outliers, etc.)_
+In section, we will present the findings from `notebooks/0-data_analysis.ipynb`. 
+
+As noted above, we will focus on the four stocks 
+
+* `^GSPC` - Standard and Poor 500 portfolio
+* `AAPL` - Apple Inc.
+* `CMCSA` - Comcast corporation
+* `GILD` - Gilead Sciences, Inc.
+
+The adjusted closing value of the stocks (which we will take up the main focus 
+in this project) can be summarized in the following table:
+
+
+| Stock | Samples | Start date | End date   | NaNs | Mean        | Max         | Min         | Std        | Q1          | Q2          | Q3          |
+|-------|---------|------------|------------|------|-------------|-------------|-------------|------------|-------------|-------------|-------------|
+| ^GSPC | 1260    | 2013-03-07 | 2018-03-07 | 0    | 2079.750175 | 2872.870117 | 1541.609985 | 286.663626 | 1884.517517 | 2065.594971 | 2206.597473 |
+| AAPL  | 1254    | 2013-03-06 | 2018-02-28 | 0    | 106.716004  | 179.260000  | 50.928800   | 32.229902  | 85.194266   | 106.182039  | 122.349196  |
+| CMCSA | 1258    | 2013-03-06 | 2018-03-06 | 0    | 29.283641   | 42.990000   | 18.031155   | 6.269263   | 24.920172   | 28.271251   | 33.938108   |
+| GILD  | 1259    | 2013-03-06 | 2018-03-06 | 0    | 79.645139   | 115.929959  | 41.946136   | 16.337412  | 69.417169   | 77.871612   | 94.513256   |
+
+From the table, we can observe that:
+
+1. The number of samples are almost the same, indicating that some trade days 
+are missing for some of the stocks
+2. There are no NaNs or 0s present
+3. ^GSPC has values roughly one order of magnitude larger than the rest of the 
+stocks
+
+Note that the mean and standard deviation are the sample mean and standard 
+deviation.
+I.e. it does not represent the true mean and standard deviation, at least not 
+if the process is non-stationary.
+
+Also note that there are $1826$ days between 2013-03-07 and 2018-03-07.
+The 1260 days reflects the fact that there are no trading during week-ends and
+bank holidays. 
+Also, if we were looking at smaller stocks, they could have "missing" data 
+simply from the fact that no one was trading those stocks on the given day.
+
+Visual inspection (see [Exploratory Visualization](#exploratory-visualization))
+shows no sign of outliers in terms of erroneous data in the adjusted close 
+values;
+one example of such error could be a single day which has 10 times higher
+closing value due to a decimal error arising from manual typing of the data.
+
+Further we can clearly observe that the full time series contain clear 
+growing and decaying trend in the range we are observing. 
+By performing a stationarity test (similar to the one performed 
+[here](https://machinelearningmastery.com/time-series-data-stationary-python/))
+we will investigate if the test set of `CMCSA`, which appears to have the least 
+linear trend, is indeed non-stationary.
+
+ We will use the
+[Augmented Dickey-Fuller](https://en.wikipedia.org/wiki/Augmented_Dickey%E2%80%93Fuller_test)
+test to test the probability that the time series contain a unit root and 
+thereby is [trend-stationary](https://en.wikipedia.org/wiki/Trend_stationary),
+i.e. if the trend is removed, then the resulting data is stationary.
+If the time series is trend-stationary it is at least not stationary.
+The hypotheses are:
+
+* Null hypothesis: The series are non-stationary (i.e. there exist an time 
+dependent trend)
+* Alternative hypothesis: The series is stationary (i.e. no trend exist)
+
+We've set the rejection hypothesis threshold of the p-value to  55 , meaning 
+that we reject the null hypothesis (the series are stationary) if the p-value
+is less than or equal to $0.05$.
+
+We found that since $p > 0.05$ there was no evidence to reject the null 
+hypothesis.
+In other words, the time series is probably non-stationary.
 
 ### Exploratory Visualization
-In this section, you will need to provide some form of visualization that summarizes or extracts a relevant characteristic or feature about the data. The visualization should adequately support the data being used. Discuss why this visualization was chosen and how it is relevant. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant characteristic or feature about the dataset or input data?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
+
+In section, we will present more findings from
+`notebooks/0-data_analysis.ipynb`. 
+
+In order to justify our choice of `Adj. Close` as the sole variable we will 
+create the data set from we will perform some visual inspections on the 
+features contained in the `.csv` files in the `data/` directory.
+
+If we for example look at the ochl features of the `AAPL` stock (the rest can
+ be found in `notebooks/0-data_analysis.ipynb`) shown below
+
+![alt text](../images/AAPL_ohlc.png "AAPL open, high, low and close value")
+ 
+We observe that overall, the ochl values follow each other to a high degree.
+It  is important to note that they are not exactly the same, and in fact, how
+the open, high and low aligns with the closing value can give important hints 
+about the closing value the following day. 
+The sudden drop is due to a stock split (which is accounted for in the 
+adjusted close price).
+
+These features can be compared with the plot of the volume data given below
+
+![alt text](../images/volume.png "AAPL open, high, low and close value")
+
+We observe that the volume does not follow the same trend as the ochl data, and 
+has far less structure. 
+Note that the ^GSPC volume has been divided by 100 to make it easier to visually
+compare the results.
+
+As the ochl features are quite similar, and as the volume data contain less 
+structure we choose (in order to limit the scope) to only look at the 
+adjusted close values (shown below), as these contain strong structures and are 
+likely to contain data needed for accurate prediction. 
+
+![alt text](../images/^GSPC_tvt.png "^GSPC training, validation and training 
+set")
+![alt text](../images/AAPL_tvt.png "AAPL training, validation and training 
+set")
+![alt text](../images/CMCSA_tvt.png "CMCSA training, validation and training 
+set")
+![alt text](../images/GILD_tvt.png "GILD training, validation and training 
+set")
+
 
 ### Algorithms and Techniques
-In this section, you will need to discuss the algorithms and techniques you intend to use for solving the problem. You should justify the use of each one based on the characteristics of the problem and the problem domain. Questions to ask yourself when writing this section:
-- _Are the algorithms you will use, including any default variables/parameters in the project clearly defined?_
-- _Are the techniques to be used thoroughly discussed and justified?_
-- _Is it made clear how the input data or datasets will be handled by the algorithms and techniques chosen?_
+
+In this project we will use some quite different techniques in order to try 
+to estimate the closing value, and we will here present each one briefly.
+
+In order to make the benchmarking tests we will use the following techniques:
+
+* *Last day prediction (custom made)*: 
+This estimator simply uses the current value to make the predictions.
+For example, assume that at day $d$ the closing value is $y$, then the 
+estimator would predict a closing value of $y$ for the days $d+7$, $d+14$ and
+$d+28$.
+The estimator is very simple, and has the potential to yield great results (at
+least in the case where the closing value changes minimally).
+The fitting routine only looks at the last value of the data, and stores this
+or these values in a variable.
+In the prediction phase, the stored value(s) will be set to the predicted value.
+This estimator has no hyper parameters to tune.
+
+* *Random gaussian (custom made)*: 
+It's often stated random guessing, or even using
+[monkeys](https://www.forbes.com/sites/rickferri/2012/12/20/any-monkey-can-beat-the-market/#5f10485a630a)
+for stock trading can outperform professional humans.
+Having no monkeys at hand, it easier to implement a random number generator 
+to do the stock prediction.
+This predictor will store the mean and the standard deviation of the training 
+data in the fitting step, and use a gaussian random number generator with 
+using the means and standard deviations from the fitting step in order to 
+make predictions.
+Note that as the processes are non-stationary, the mean and standard 
+deviation will change as time evolves.
+Neither this estimator has any hyper parameters to tune.
+
+* *Linear regression (from the `sklearn` package)*:
+This is considered to be the simplest of the linear regressors.
+It is using the
+[ordinary least squares](http://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares) 
+during fitting.
+This will give the coefficients $a$ and $b$ in the linear equation $y=ax+b$ 
+which will be used when predicting $y$ based on the input $x$.
+Although the class have some 
+[input parameters](http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html#sklearn.linear_model.LinearRegression)
+for the constructor, we would not usually define these as tunable hyper 
+parameters for the model
+
+For trying to predict the closing value we will use the following techniques:
+
+* *k-nearest neighbor regression (from the `sklearn` package)*:
+Also this is a quite simple model, but often yields good results despite its 
+simplicity.
+Even sophisticated software like
+[QuantDesk](https://classroom.udacity.com/courses/ud501/lessons/4684695874/concepts/46403887880923)
+are using kNN.
+The fitting phase just uploads the available data to a storage location (like
+the local memory or a database).
+When predicting, the algorithm will find the k nearest neighbors (according 
+to a distance metric) and predict the new value based on the mean of these.
+The algorithm has at least
+[some](http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html#sklearn.neighbors.KNeighborsRegressor)
+hyper parameters to play around with.
+We can choose whether the mean should be weighted by for example distance or 
+not, what metric to use for the calculation of distance and last but not 
+least, the number of neighbors to take into account.
+ 
+* *A Long Short Time Memory Recurring Neural Network (from the `keras` 
+package, modified for our needs)*: 
+The Long Short Time Memory (LSTM) neural network is a type of recurring 
+neural network (RNN), which means that output of one of the 
+[recurrences](https://www.youtube.com/watch?v=UNmqTiOnRfg) in 
+the neural network serves as the input for the next one, like explained
+[here](https://classroom.udacity.com/courses/ud730/lessons/6378983156/concepts/65523553300923).
+A nice introduction to LSTM can be found in this
+[blog](http://colah.github.io/posts/2015-08-Understanding-LSTMs/).
+Although figuring out how the input to this machinery can be
+[mind boggling](https://machinelearningmastery.com/reshape-input-data-long-short-term-memory-networks-keras/)
+at first, all we need to do is to reshape our data to a 3-dimensional array\ 
+where the dimensions represents
+`[samples, time steps, features]`, where the `time step` dimension tells the 
+LSTM how many
+[times](https://github.com/keras-team/keras/issues/2045) 
+the 
+[recurrence should occur](https://stats.stackexchange.com/questions/288404/how-does-keras-generate-an-lstm-layer-whats-the-dimensionality).
+The LSTM overcomes the vanishing gradient problem found in RNNs by having 
+gates in each cell (equivalent to nodes in traditional neural 
+network) which determines what should be kept in memory, and what should be 
+forgotten, and is therefore very well suited for time series forecasting.
+The LSTM learns the weights of the gates and the cells in the fitting phase 
+and uses these in the prediction phase.
+The hyper parameter tuning can be quite extensive, so we have in this project
+limited the hyper parameter tuning to epochs, batch size, drop out rates, 
+number of cells in the first layer, number of cells in the second layer and 
+the number of time steps.
 
 ### Benchmark
-In this section, you will need to provide a clearly defined benchmark result or threshold for comparing across performances obtained by your solution. The reasoning behind the benchmark (in the case where it is not an established result) should be discussed. Questions to ask yourself when writing this section:
-- _Has some result or value been provided that acts as a benchmark for measuring performance?_
-- _Is it clear how this result or value was obtained (whether by data or by hypothesis)?_
+
+The calculations of the benchmarks can be found in `notebooks/1.*.ipynb`.
+We use the results of the simple algorithms above to get a feeling with how 
+well we can perform with the simplest tools in the toolbox.
+If one of the more advanced methods is only slightly better than these 
+results, one should consider if it is worth the cost to use a more complex 
+model.
+
+By using the rolling prediction technique described in the
+[Problem Statement](#problem-statement)
+and the metric described in [Metrics](#metrics), we end up with the following
+scores (the complete table with all the results can be found in 
+[IV. Results](#iv.-results))
+
+| Stock | Last day | Random Gaussian | Linear regression |
+|-------|----------|-----------------|-------------------|
+| ^GSPC | 7.01     | 577.33          | 6.15              |
+| AAPL  | 1.50     | 96.01           | 1.34              |
+| CMCSA | 0.51     | 18.11           | 0.48              |
+| GILD  | 0.94     | 15.55           | 0.76              |
+| Sum   | 9.95     | 706.99          | 8.72              |
 
 
 ## III. Methodology
@@ -284,6 +493,16 @@ source code.
 contains functionality to perform the analysis, whereas the analysis itself 
 is performed in the `notebooks` dictionary.
 
+| Stock | knn (unoptimized) | lstm (unoptimized, unscaled) | lstm (unoptimized, scaled) |
+|-------|-------------------|------------------------------|----------------------------|
+| ^GSPC | 2.38              | 11827.14                     | 148.83                     |
+| AAPL  | 0.99              | 503.91                       | 7.59                       |
+| CMCSA | 0.33              | 23.31                        | 0.59                       |
+| GILD  | 0.88              | 42.67                        | 0.75                       |
+| Sum   | 4.58              | 12397.03                     | 157.77                     |
+
+
+
 ### Refinement
 In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
 - _Has an initial solution been found and clearly reported?_
@@ -291,8 +510,36 @@ In this section, you will need to discuss the process of improvement you made up
 - _Are intermediate and final solutions clearly reported as the process is improved?_
 
 
+| Stock | knn (optimized) | lstm (optimized) | knn (normal prediction) |
+|-------|-----------------|------------------|-------------------------|
+| ^GSPC | 0.54            | 6.70             | 93.65                   |
+| AAPL  | 0.10            | 1.59             | 55.64                   |
+| CMCSA | 0.04            | 0.58             | 0.97                    |
+| GILD  | 0.05            | 0.76             | 2.42                    |
+| Sum   | 0.73            | 9.63             | 152.68                  |
+
+
+| Stock | knn (normal prediction) |
+|-------|-------------------------|
+| ^GSPC | 93.65                   |
+| AAPL  | 55.64                   |
+| CMCSA | 0.97                    |
+| GILD  | 2.42                    |
+| Sum   | 152.68                  |
+
 ## IV. Results
 _(approx. 2-3 pages)_
+
+Summary table of the results
+
+| Stock | Last day | Random Gaussian | Linear regression | knn (unoptimized) | lstm (unoptimized, unscaled) | lstm (unoptimized, scaled) | knn (optimized) | lstm (optimized) | knn (normal prediction) |
+|-------|----------|-----------------|-------------------|-------------------|------------------------------|----------------------------|-----------------|------------------|-------------------------|
+| ^GSPC | 7.01     | 577.33          | 6.15              | 2.38              | 11827.14                     | 148.83                     | 0.54            | 6.70             | 93.65                   |
+| AAPL  | 1.50     | 96.01           | 1.34              | 0.99              | 503.91                       | 7.59                       | 0.10            | 1.59             | 55.64                   |
+| CMCSA | 0.51     | 18.11           | 0.48              | 0.33              | 23.31                        | 0.59                       | 0.04            | 0.58             | 0.97                    |
+| GILD  | 0.94     | 15.55           | 0.76              | 0.88              | 42.67                        | 0.75                       | 0.05            | 0.76             | 2.42                    |
+| Sum   | 9.95     | 706.99          | 8.72              | 4.58              | 12397.03                     | 157.77                     | 0.73            | 9.63             | 152.68                  |
+
 
 ### Model Evaluation and Validation
 In this section, the final model and any supporting qualities should be evaluated in detail. It should be clear how the final model was derived and why this model was chosen. In addition, some type of analysis should be used to validate the robustness of this model and its solution, such as manipulating the input data or environment to see how the model’s solution is affected (this is called sensitivity analysis). Questions to ask yourself when writing this section:
