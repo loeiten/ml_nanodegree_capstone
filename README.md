@@ -13,7 +13,8 @@ The assignment text can be found in
 the proposal in 
 [capstone_proposal.pdf](capstone_proposal.pdf)
 and the final report in
-[capstone_report.pdf](capstone_report.pdf)
+[capstone_report.pdf](capstone_report.pdf) (note this is best rendered in the
+ markdown format [here](report/capstone_report.md))
 
 ![alt text](images/optimal_knn.png "Optimal prediction of the kNN estimator")
 

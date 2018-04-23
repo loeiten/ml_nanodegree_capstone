@@ -801,7 +801,7 @@ and the true value.
 In the end it is dollar we are investing, so the total amount of dollars 
 mispredicted can be crucial.
 We observe that over the course of approximately one year the optimal model 
-mispredicted $2501 \$$ for the `^GSPC` stock, and mere $183 \$$ for he 
+mispredicted $2501 \$$ for the `^GSPC` stock, and mere $183 \$$ for the 
 `CMCSA` stock.
 Luckily, the mispredictions are not more than $\pm 20$ on a usual day for the
 `^GSPC` stock which are operating with the highest values.
