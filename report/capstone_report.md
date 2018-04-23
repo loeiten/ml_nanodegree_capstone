@@ -214,7 +214,7 @@ Therefore, we will be using a form of normalized mean squared error
 defined by
  
 $$
-\frac{\sqrt{\frac{\sum _{i=1}^{n}({\hat {y}}_{i}-y_{i})^{2}}{n}}}}}
+\frac{\sqrt{\frac{\sum _{i=1}^{n}({\hat {y}}_{i}-y_{i})^{2}}{n}}}
 {y_{\max} - y_{\min}}
 $$
 
