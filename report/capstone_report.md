@@ -445,8 +445,8 @@ model.
 By using the rolling prediction technique described in the
 [Problem Statement](#problem-statement)
 and the metric described in [Metrics](#metrics), we end up with the following
-scores (the complete table with all the results can be found in 
-[IV. Results](#iv.-results))
+scores (the complete table with all the results can be found in the
+[Justification](#justification) section)
 
 | Stock | Last day | Random Gaussian | Linear regression |
 |-------|----------|-----------------|-------------------|
@@ -733,9 +733,38 @@ parameters for kNN is shown below
 "Optimal prediction of the kNN estimator using normal prediction")
 
 ## IV. Results
-_(approx. 2-3 pages)_
 
-Summary table of the results
+### Model Evaluation and Validation
+
+As we saw in the [Refinement](#refinement) section we saw that the nearest 
+neighbor estimator performed quite well with the optimal set of parameters.
+Even though the prediction time of kNN can be long for large data sets, the 
+rolling prediction (which includes refitting of the model every day) was 
+faster than the normal prediction of the optimal LSTM estimator.
+Finally, the kNN is complex to understand and set up than the LSTM models.
+These three arguments makes the optimal kNN model the "winner" amongst the 
+different models.
+
+We note that even though the adjusted closing price for the `^GSPC` stock is 
+one order of magnitude larger than the rest of the stocks, the optimal model 
+performs well for all of them.
+We can also see that the overall patterns of the different stocks are 
+different, so the architecture is robust to unseen data.
+
+We can also observe that the predictions for the 7, 14 and 28 day prediction 
+is the same, as the algorithm finds the same nearest neighbors for the 
+predictions in the query space.
+
+The robustness towards the input data can be observed in the plot showing the
+error as a function of days (that is features) in the 
+[Implementation](#implementation) section.
+
+With a healthy skeptism, we can conclude that the model architecture is 
+trustworthy. 
+
+### Justification
+
+Let us now make a summary of all the scores obtained in this project.
 
 | Stock | Last day | Random Gaussian | Linear regression | knn (unoptimized) | lstm (unoptimized, unscaled) | lstm (unoptimized, scaled) | knn (optimized) | lstm (optimized) | knn (normal prediction) |
 |-------|----------|-----------------|-------------------|-------------------|------------------------------|----------------------------|-----------------|------------------|-------------------------|
@@ -745,54 +774,111 @@ Summary table of the results
 | GILD  | 0.94     | 15.55           | 0.76              | 0.88              | 42.67                        | 0.75                       | 0.05            | 0.76             | 2.42                    |
 | Sum   | 9.95     | 706.99          | 8.72              | 4.58              | 12397.03                     | 157.77                     | 0.73            | 9.63             | 152.68                  |
 
+We can see that even though the benchmarks (the three first columns in the 
+table above) are quite good, the optimal kNN model manages to beat all the 
+scores by a factor of $10$ (at least when comparing to the sum of the Linear 
+regression estimator and).
 
-### Model Evaluation and Validation
-In this section, the final model and any supporting qualities should be evaluated in detail. It should be clear how the final model was derived and why this model was chosen. In addition, some type of analysis should be used to validate the robustness of this model and its solution, such as manipulating the input data or environment to see how the model’s solution is affected (this is called sensitivity analysis). Questions to ask yourself when writing this section:
-- _Is the final model reasonable and aligning with solution expectations? Are the final parameters of the model appropriate?_
-- _Has the final model been tested with various inputs to evaluate whether the model generalizes well to unseen data?_
-- _Is the model robust enough for the problem? Do small perturbations (changes) in training data or the input space greatly affect the results?_
-- _Can results found from the model be trusted?_
-
-### Justification
-In this section, your model’s final solution and its results should be compared to the benchmark you established earlier in the project using some type of statistical analysis. You should also justify whether these results and the solution are significant enough to have solved the problem posed in the project. Questions to ask yourself when writing this section:
-- _Are the final results found stronger than the benchmark result reported earlier?_
-- _Have you thoroughly analyzed and discussed the final solution?_
-- _Is the final solution significant enough to have solved the problem?_
-
+The optimized LSTM model manages to beat the sum of the last day prediction 
+and random gaussian prediction, but has a higher error than what was found in
+the linear regression benchmark.
+Again, it should be taken into account that the LSTM predictions are done in 
+a non-updating manner, and it is expected that the model would yield a better
+result if we had the patience and computational power to perform a rolling 
+prediction for the LSTM.
 
 ## V. Conclusion
-_(approx. 1-2 pages)_
 
 ### Free-Form Visualization
-In this section, you will need to provide some form of visualization that emphasizes an important quality about the project. It is much more free-form, but should reasonably support a significant result or characteristic about the problem that you want to discuss. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant or important quality about the problem, dataset, input data, or results?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
+
+In order to see how well the optimal model performed, we will present a 
+figure below which shows the absolute difference between the predicted value 
+and the true value.
+
+![alt text](../images/mispredicted_dollars.png
+"Optimal prediction of the kNN estimator using normal prediction")
+
+In the end it is dollar we are investing, so the total amount of dollars 
+mispredicted can be crucial.
+We observe that over the course of approximately one year the optimal model 
+mispredicted $2501 \$$ for the `^GSPC` stock, and mere $183 \$$ for he 
+`CMCSA` stock.
+Luckily, the mispredictions are not more than $\pm 20$ on a usual day for the
+`^GSPC` stock which are operating with the highest values.
+This tells us that even though the predictions are good, we should not 
+believe blindly in the results as it might have dire consequences for 
+investments.
 
 ### Reflection
-In this section, you will summarize the entire end-to-end problem solution and discuss one or two particular aspects of the project you found interesting or difficult. You are expected to reflect on the project as a whole to show that you have a firm understanding of the entire process employed in your work. Questions to ask yourself when writing this section:
-- _Have you thoroughly summarized the entire process you used for this project?_
-- _Were there any interesting aspects of the project?_
-- _Were there any difficult aspects of the project?_
-- _Does the final model and solution fit your expectations for the problem, and should it be used in a general setting to solve these types of problems?_
+
+In this project we have looked at ways to predict the future adjusted closing
+price.
+We have implemented three models for benchmarking: The last day estimator, 
+the random gaussian estimator and the linear regression estimator, and we 
+have implemented to estimators which we try to beat the benchmark with, 
+namely the kNN estimator and the LSTM estimator.
+We have further implemented algorithms to create targets and additional 
+features, and an algorithm to update the model after each prediction 
+(the rolling prediction), and constructed a scoring parameter which takes the
+7, 14 and 28 days prediction into account.
+Although the LSTM models usually outperforms other models, we have seen that 
+the simple kNN estimator had the best results (that is if we say that we only
+make normal predictions with the LSTM models as they are slow to train).
+We have also hinted to the fact that we should not trust the optimal model 
+blindly if used to make investment decisions.
+
+The final question is of course how much we trust in the final model.
+Are we willing to risk actual money on the model.
+This of course depends on how much risk we are willing to take.
+If the stock market was as simple as these stocks for all eternity it would 
+make sense to have some faith in the model.
+
+However, the stocks presented in this project represents only a tiny time 
+window compared to stock market trading.
+No major depressions occurred during this period, and it is unknown how well 
+the model would perform in a more volatile environment.
+
+Also the stocks presented here are big, massively traded stocks all in the 
+top range of the S&P 500.
+The story could have been quite different for let's say small stocks, or 
+stocks just appearing on the market.
+As the optimal model is now, it needs at least $80$ days of historic data 
+until it gives somewhat trustworthy results.
+
+Personally it has been quite satisfying learning about forecasting with 
+machine learning, an in particular to learn about the exotic LSTM architecture.
+I think the most challenging has been to book-keep the different days properly.
+There has been a lot of "off-by-one" mistakes along the way.
 
 ### Improvement
-In this section, you will need to provide discussion as to how one aspect of the implementation you designed could be improved. As an example, consider ways your implementation can be made more general, and what would need to be modified. You do not need to make this improvement, but the potential solutions resulting from these changes are considered and compared/contrasted to your current solution. Questions to ask yourself when writing this section:
-- _Are there further improvements that could be made on the algorithms or techniques you used in this project?_
-- _Were there algorithms or techniques you researched that you did not know how to implement, but would consider using if you knew how?_
-- _If you used your final solution as the new benchmark, do you think an even better solution exists?_
 
------------
+The scope of this project is quite limited considering the vast field of both
+financial analysis and forecasting in general.
+In other words, there is a lot of room for improvement.
+One could for example consider to
 
-**Before submitting, ask yourself. . .**
+* Do a full grid scan in search for the optima
+* Different estimators could have been investigated.
+One could even have considered to make use of reinforced learning
+* One could have made a rolling prediction for the LSTM if one had enough 
+data resources to see how good/bad it actually performed
+* More stocks could have been investigated to get a better understanding of 
+the performance
+* One could have tried to use features containing the closing values at the 
+previous day to see the effect of this on the LSTM model
+* Features like high, low, volume etc. could have been included
+* Categorical features such as sentiment analysis could have been added
+* Other stocks could have been included as features as stocks are not statistical 
+independent
+* A proper feature analysis could have been done on the data
 
-- Does the project report you’ve written follow a well-organized structure similar to that of the project template?
-- Is each section (particularly **Analysis** and **Methodology**) written in a clear, concise and specific fashion? Are there any ambiguous terms or phrases that need clarification?
-- Would the intended audience of your project be able to understand your analysis, methods, and results?
-- Have you properly proof-read your project report to assure there are minimal grammatical and spelling mistakes?
-- Are all the resources used for this project correctly cited and referenced?
-- Is the code that implements your solution easily readable and properly commented?
-- Does the code execute without error and produce results similar to those reported?
+There are also room for improvements in the pipeline.
+The APIs could have been made more user friendly when querying for a prediction.
+For example could the input be predict stock `x`, and the training and 
+prediction would work seamlessly in the background.
+If there was a good working API for obtaining the daily stock values, it 
+would also bee nice to have an algorithm which automatically downloaded and 
+updated the datasets each day.
 
 
 ## VI. Additional resources (not mentioned in the text)
