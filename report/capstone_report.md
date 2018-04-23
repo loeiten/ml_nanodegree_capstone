@@ -1,6 +1,6 @@
 # Machine Learning Engineer Nanodegree
 ## Capstone Project
-April 22nd, 2018
+April 23rd, 2018
 
 Michael Løiten
 
@@ -458,40 +458,150 @@ scores (the complete table with all the results can be found in
 
 
 ## III. Methodology
-_(approx. 3-5 pages)_
-
-### Data Preprocessing
-In this section, all of your preprocessing steps will need to be clearly documented, if any were necessary. From the previous section, any of the abnormalities or characteristics that you identified about the dataset will be addressed and corrected here. Questions to ask yourself when writing this section:
-- _If the algorithms chosen require preprocessing steps like feature selection or feature transformations, have they been properly documented?_
-- _Based on the **Data Exploration** section, if there were abnormalities or characteristics that needed to be addressed, have they been properly corrected?_
-- _If no preprocessing is needed, has it been made clear why?_
-
-Input to the LSTM is a 3-dimensional array where the dimensions represents
-`[samples, time steps, features]`.
-After reading the data the dimensions are `[samples, features]`.
-The `time step` dimension tells the LSTM how many
-[times](https://github.com/keras-team/keras/issues/2045) 
-the 
-[recurrence should occur](https://stats.stackexchange.com/questions/288404/how-does-keras-generate-an-lstm-layer-whats-the-dimensionality),
-and we need a routine which transform the data to the desired format.
-A function which does this job is `prepare_input`, found in 
-`estimators/lstm.py`.
-
-Datapoints (prices of different stocks) are not independent of each other -> Naive Bayes is not appropriate
-Add features and do some PCA?
-
-### Implementation
-In this section, the process for which metrics, algorithms, and techniques that you implemented for the given data will need to be clearly documented. It should be abundantly clear how the implementation was carried out, and discussion should be made regarding any complications that occurred during this process. Questions to ask yourself when writing this section:
-- _Is it made clear how the algorithms and techniques were implemented with the given datasets or input data?_
-- _Were there any complications with the original metrics or techniques that required changing prior to acquiring a solution?_
-- _Was there any part of the coding process (e.g., writing complicated functions) that should be documented?_
 
 > **Note:** All classes and functions has been extensively documented in the 
-source code.
+source code, and more details can be found in the documentation.
 
-> **Note:** The dictionaries `data_preparation`, `estimators` and `utils` 
-contains functionality to perform the analysis, whereas the analysis itself 
-is performed in the `notebooks` dictionary.
+### Data Preprocessing
+
+Before the models can be used, the data needs to be preprocessed.
+Preprocessing is firstly done when reading the data by using the `OCHLVAData`
+class in `data_preparation/ochlva_data.py`.
+When cleaning the data, the class makes sure that only dates present in 
+`^GSPC` is considered, and if any `NaN`s are detected, they will be filled by 
+first running a forward fill (setting missing data to the date with previous 
+value), then by running a backwards fill (setting remaining missing data in 
+the past to the nearest value in relative future).
+
+The targets are then being created from the time series by using the 
+`target_generator` found in `utils/column_modifiers.py`.
+The targets are simply the time series under consideration shifted by the 
+number of days we would like to predict for.
+This means that the last observation will contain `NaN`s as we do not know 
+the future value, and these `NaN`s are removed before using the data in the 
+models.
+
+When predicting using the KNN algorithm we are also generating features with 
+the `feature_generator` of `utils/column_modifiers.py` by shifting the time 
+series under consideration backwards in time.
+This means that we will generate `NaN`s for the first observations in the 
+time series, and also these `NaN`s are removed before using the data in the 
+models.
+
+For predictions with the LSTM models we need to create a 3-dimensional array.
+The dimensions represents `[samples, time steps, features]`.
+After reading the data from file and generating targets (and possibly 
+features), the dimension of the data set is on the form `[samples, features]`.
+We therefore create a `time step` dimension in `prepare_input` 
+in `estimators/lstm.py`, which tells the LSTM how many
+[times](https://github.com/keras-team/keras/issues/2045) 
+the 
+[recurrence should occur](https://stats.stackexchange.com/questions/288404/how-does-keras-generate-an-lstm-layer-whats-the-dimensionality).
+
+As seen from `notebooks/2.2.1-lstm_prediction.ipynb`, the LSTM performs quite
+poorly for unscaled features as it is trying to predict numbers far outside 
+of the range.
+If we were to predict only the closing price the next day we could have 
+subtracted the value of the previous day to the current day, and 
+thereby detrended the series.
+However, in this project we aim to predict the adjusted close value 
+7, 14 and 28 days ahead.
+Even if we had successfully predicted the new target, we would not 
+be able to do the back transformation which would depend on the values 6 days
+ahead, 13 days ahead and 27 days ahead, which again would depend on the 
+values 5 days ahead an so on.
+In other words, we would need a prediction all the way until the last 
+prediction day if we wanted to back transform to the adjusted close. 
+Instead, we will scale the features by using the `StockMinMax.transform` 
+found in `utils/transformations.py`.
+The transformation reads
+
+$$
+x' = (x - x_{\min})/(x_{\max} - x_{\min})
+$$
+
+and the back transformation reads
+
+$$
+x = x'(x_{\max} - x_{\min}) + x_{\min}.
+$$
+
+It is important when scaling the features that we do not leak information 
+from the unseen test set into the training and validation set.
+In other words, the `max` and `min` in the above formulas refers to the 
+maximum and minimum of the training set.
+This can be problematic in the case where the test set deviates significantly
+from the training set.
+However, although the test sets deviates some form the training set in our 
+examples, it's still within the range where the LSTM models can make 
+meaningful predictions.
+
+
+### Implementation
+ 
+Although the code is well documented in the code, we will in this section 
+provide some documentation of the "big picture" implementation.
+
+In order to read the data from the files, an `OCHLVAData` class has been 
+provided in `data_preparation/ochlva_data.py`.
+This class handles everything related to the data sets.
+In other words, it contains copy of the raw data of the stocks, the cleaned 
+data of the stocks (where `NaN`s and bad dates have been removed) and 
+transformed data (for example where some features have been added or removed).
+By abstracting the handling of the data it is easier to loop over the stocks 
+one by one for model fitting and prediction.
+
+The estimators used in this project are found in the `estimators` directory 
+if they are not already implemented in `sklearn`.
+The estimators inherits from the `sklearn` regressors so that they in 
+principle can be used in a `sklearn` pipeline.
+Also, as the estimators shares the same member functions it is easier to 
+reuse the code.
+In the case of the LSTM estimator, the architecture of the net has been put 
+as input parameters in the constructor so that it can be used in the same way
+other `sklearn` objects treat hyper parameters.
+
+In principle we could have looped over all regressors in a notebook, and 
+shown the result, but the results from different regressors have been separated
+to different notebooks in order to get a better overview.
+
+The notebooks for the unoptimized models found in `notebooks/2.*.ipynb` are 
+quite similar those for obtaining the benchmarks in `notebooks/1.*.ipynb`.
+The process contains the following steps:
+
+1. Read the different stock data from the files
+2. Remove all features except `Adj. Close`
+3. Generate the targets from the `Adj. Close`
+4. Initialize the regressor
+5. Loop through the stocks
+    1. Split into a training and test set
+    2. Make either a rolling or a normal prediction (found in 
+    `estimators/predictions.py`)
+    3. Calculate the score from the predictions
+
+The result of the basic kNN prediction can be seen below for `^GSPC`
+
+![alt text](../images/knn_unoptimized.png "Unoptimized kNN prediction for 
+^GSPC")
+
+As mentioned, the unscaled LSTM predictions perform quite poorly as seen for 
+`^GSPC` in the figure below
+
+![alt text](../images/lstm_unoptimized_unscaled.png "Unoptimized and unscaled 
+LSTM prediction for ^GSPC")
+
+However, the predictions are not so bleak when we scale as seen below
+
+![alt text](../images/lstm_unoptimized_scaled.png "Unoptimized and unscaled LSTM 
+prediction for ^GSPC")
+
+A summary of the score of all the unoptimized predictions can be seen in the 
+table below.
+
+> **Note:** As training LSTM models are quite computationally heavy, all the 
+predictions with LSTM in this project has been performed with a "normal" 
+prediction.
+One should therefore compare the scores between the different models with care.
 
 | Stock | knn (unoptimized) | lstm (unoptimized, unscaled) | lstm (unoptimized, scaled) |
 |-------|-------------------|------------------------------|----------------------------|
@@ -502,22 +612,111 @@ is performed in the `notebooks` dictionary.
 | Sum   | 4.58              | 12397.03                     | 157.77                     |
 
 
-
 ### Refinement
-In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
-- _Has an initial solution been found and clearly reported?_
-- _Is the process of improvement clearly documented, such as what techniques were used?_
-- _Are intermediate and final solutions clearly reported as the process is improved?_
 
+We will now investigate whether we can improve the models to yield better 
+results than those obtained in [Implementation](#implementation).
+In order to that we will tune the hyper parameters of the two models.
+For the kNN estimator this means tuning:
 
-| Stock | knn (optimized) | lstm (optimized) | knn (normal prediction) |
-|-------|-----------------|------------------|-------------------------|
-| ^GSPC | 0.54            | 6.70             | 93.65                   |
-| AAPL  | 0.10            | 1.59             | 55.64                   |
-| CMCSA | 0.04            | 0.58             | 0.97                    |
-| GILD  | 0.05            | 0.76             | 2.42                    |
-| Sum   | 0.73            | 9.63             | 152.68                  |
+1. The number of features
+2. The number of nearest neighbors
 
+For the LSTM estimator this means tuning:
+
+1. The number of epochs
+2. The batch size
+3. The drop out rates
+4. The number of cells (the equivalent to number of neurons in a conventional
+ neural network)
+5. The number of cells in a secondary layer
+6. The time steps
+
+Note that we could have performed an entire 
+[grid search](http://scikit-learn.org/stable/modules/grid_search.html#exhaustive-grid-search),
+by doing some modifications to the scoring function and they way the 
+predictions are made, this could be done with the estimators in `sklearn` as 
+all of the estimators behaves as `sklearn` regression objects.
+The full grid search however, can be computational heavy, and sometimes it 
+suffices to know how the hyper parameters scales when changing one parameter 
+at the time.
+The drawback of the latter approach is of course that there may exist optima
+arising from special combinations of the parameters which are different than 
+the optima for the individual parameters.
+Nevertheless we will go for the last approach in this project.
+
+When optimizing the parameters for the kNN estimator, we observe from 
+`notebooks/3.1.1-knn_prediction_tuning_features.ipynb`
+that the more features the better the prediction.
+However, the gain is diminishing for very high number of neighbors (as seen 
+from the figure below), and we must also consider that we are losing training
+data for each new feature day as we do not know the previous values for the
+very first observations.
+Therefore, we fix the number of features to `160`.
+This means that we have a feature for the $160$ previous days prior to the 
+current observation day. 
+
+![alt text](../images/knn_tuning_features.png "Error versus number of 
+feature days for the kNN estimator")
+
+Interestingly we see from 
+`notebooks/3.1.2-knn_prediction_tuning_number_of_neighbors.ipynb` that the 
+estimator performs best when only the nearest neighbor is considered.
+One possible explanation is that features from previous days get close to the
+query point in the hyperspace, and that the mean of these is therefore worse 
+than considering the closest point alone.
+
+For the LSTM it turns out that our initial set of parameters were almost 
+optimal.
+The following was found during the investigation:
+
+1. Increased number of epochs gives reduced error, but the decrease is 
+diminishing for high number of epochs.
+This makes sense at the models gets to know the data better for increased 
+number of epochs.
+A balance between training time and error is found at $160$ epochs.
+2. The error as a function of batch size seem to have a minima at a size of 
+$128$.
+Both lower and higher size yields poorer performance.
+3. Increased drop out rates yield worse performance.
+This indicates that the sequential information is highly connected, and 
+should not be considered separately.
+4. The number of cells seem to have a minima at $128$ cells.
+Less cells seems to underfit, and more cells seems to overfit, as indicated 
+in the figure below.
+This means that $128$ cells better matches the complexity of the problem 
+compared to other values.
+5. A secondary LSTM layer seem to overfit as well.
+6. $1$ time step seems to be optimal.
+In other words, no recurrence seems to be the best.
+Although this may be the case, it is likely that the LSTM is poorly 
+constructed as recurrence is known for usually improving performance for 
+sequential data.
+
+![alt text](../images/lstm_tuning_cells.png "Error versus number of 
+cells for the LSTM estimator")
+
+A summary of the obtained scores can be found in the table below.
+
+| Stock | knn (optimized) | lstm (optimized) |
+|-------|-----------------|------------------|
+| ^GSPC | 0.54            | 6.70             |
+| AAPL  | 0.10            | 1.59             |
+| CMCSA | 0.04            | 0.58             |
+| GILD  | 0.05            | 0.76             |
+| Sum   | 0.73            | 9.63             |
+
+As we can observe, the optimized kNN performs really well as shown for the 
+`^GPSC` in the figure below
+
+![alt text](../images/optimal_knn.png "Optimal prediction of the kNN estimator")
+
+As mentioned above, the comparison between the kNN and LSTM is unfair as we 
+are making a rolling prediction (where we update the model after each 
+prediction) for the kNN predictions, and do a normal prediction (no update) 
+for the LSTM.
+If we were to do a normal prediction for the kNN as well, the scores would 
+yield what is presented in the table below.
 
 | Stock | knn (normal prediction) |
 |-------|-------------------------|
@@ -526,6 +725,12 @@ In this section, you will need to discuss the process of improvement you made up
 | CMCSA | 0.97                    |
 | GILD  | 2.42                    |
 | Sum   | 152.68                  |
+
+A visualization of the `GILD` stock with the normal prediction with optimal 
+parameters for kNN is shown below
+
+![alt text](../images/optimal_knn_normal_prediction.png
+"Optimal prediction of the kNN estimator using normal prediction")
 
 ## IV. Results
 _(approx. 2-3 pages)_
