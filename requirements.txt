@@ -2,7 +2,7 @@ matplotlib==2.2.0
 pandas==0.22.0
 Quandl==3.3.0
 numpy==1.14.2
-requests==2.18.4
+requests==2.20.1
 beautifulsoup4==4.6.0
 python_dateutil==2.7.2
 scikit_learn==0.19.1
