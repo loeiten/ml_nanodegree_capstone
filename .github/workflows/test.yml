@@ -16,7 +16,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        # TF not fully supported on 3.8 yet
+        # https://github.com/tensorflow/tensorflow/issues/44485
+        python-version: [3.6, 3.7, 3.8]
         os: [ubuntu-latest]
 
     steps:
@@ -38,6 +40,7 @@ jobs:
 
       - name: Run test
         run: |
+          pip install pytest
           pip install coverage
           coverage run --source=. -p -m pytest tests/
 
