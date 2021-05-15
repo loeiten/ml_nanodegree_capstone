@@ -3,13 +3,13 @@
 
 import time
 import numpy as np
-from tensorflow import set_random_seed
+import tensorflow as tf
 from sklearn.base import RegressorMixin
-from sklearn.linear_model.base import LinearModel
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import LSTM
-from keras.callbacks import Callback
+from sklearn.linear_model._base import LinearModel
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.callbacks import Callback
 
 
 class TimeHistory(Callback):
@@ -98,7 +98,7 @@ class LSTMRegressor(RegressorMixin, LinearModel):
 
         # Set the seed
         np.random.seed(seed)
-        set_random_seed(seed)
+        tf.random.set_seed(seed)
 
         # Parameters to be used in make_model
         self._cells = cells
