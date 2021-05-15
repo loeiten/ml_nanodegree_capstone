@@ -4,7 +4,7 @@
 
 import numpy as np
 from sklearn.base import RegressorMixin
-from sklearn.linear_model.base import LinearModel
+from sklearn.linear_model._base import LinearModel
 
 
 class LatestDay(RegressorMixin, LinearModel):

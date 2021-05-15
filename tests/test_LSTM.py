@@ -3,7 +3,7 @@
 
 import unittest
 import numpy as np
-from keras.models import Sequential
+from tensorflow.keras.models import Sequential
 from estimators.lstm import prepare_input
 from estimators.lstm import make_model
 from estimators import lstm
