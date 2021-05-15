@@ -1,6 +1,6 @@
 # Stock price predictor
 
-[![Build Status](https://travis-ci.org/loeiten/ml_nanodegree_capstone.svg?branch=master)](https://travis-ci.org/loeiten/ml_nanodegree_capstone)
+[![Build Status](https://github.com/loeiten/ml_nanodegree_capstone/workflows/Test/badge.svg?branch=main)](https://github.com/loeiten/ml_nanodegree_capstone/actions?query=workflow%3A%22Test%22)
 [![codecov](https://codecov.io/gh/loeiten/ml_nanodegree_capstone/branch/master/graph/badge.svg)](https://codecov.io/gh/loeiten/ml_nanodegree_capstone)
 [![PEP8](https://img.shields.io/badge/code%20style-PEP8-brightgreen.svg)](https://www.python.org/dev/peps/pep-0008/)
 [![Python](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/)
